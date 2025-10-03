@@ -137,64 +137,119 @@
         .replace(/'/g, '&#039;');
     }
 
-    function renderOrders(orders) {
-      ordersListEl.innerHTML = '';
-      if (!orders.length) {
-        ordersListEl.textContent = 'لا توجد طلبات.';
-        return;
+    // ---------------------------------------------
+// استخدم هذه الدالة لعرض قائمة الطلبات (Replace renderOrders)
+// ---------------------------------------------
+function renderOrders(orders) {
+  ordersListEl.innerHTML = '';
+
+  if (!orders || !orders.length) {
+    ordersListEl.textContent = 'لا توجد طلبات.';
+    return;
+  }
+
+  orders.forEach(order => {
+    const container = document.createElement('div');
+    container.className = 'order-item';
+
+    // helper: نجهز نص المنتجات بصورة مرنة
+    function formatProductsField(raw) {
+      if (!raw) return '<i>لا توجد منتجات</i>';
+
+      // إذا كان عبارة عن سلسلة نصية JSON
+      if (typeof raw === 'string') {
+        try {
+          const parsed = JSON.parse(raw);
+          return formatProductsField(parsed); // يدوّر معنا بالـ parsed
+        } catch (err) {
+          // ليست JSON => نعرض النص بعد هروب الأحرف
+          return escapeHtml(raw);
+        }
       }
 
-      orders.forEach(order => {
-        const orderItem = document.createElement('div');
-        orderItem.className = 'order-item';
+      // إذا كانت مصفوفة
+      if (Array.isArray(raw)) {
+        if (raw.length === 0) return '<i>لا توجد منتجات</i>';
+        return raw.map(item => {
+          const name = escapeHtml(item.name || item.title || 'بدون اسم');
+          const color = escapeHtml(item.color || '');
+          const qty = escapeHtml(String(item.qty ?? item.quantity ?? 1));
+          const price = escapeHtml(String(item.unitPrice ?? item.price ?? '0'));
+          return `
+            <div class="order-product">
+              🛍️ <b>${name}</b><br>
+              ▪️ اللون: ${color || '-'} &nbsp; | &nbsp;
+              ▪️ الكمية: ${qty} &nbsp; | &nbsp;
+              ▪️ السعر: ${price} دج
+            </div>
+          `;
+        }).join('<br>');
+      }
 
-        // Préparer valeurs avec fallback
-        const customerName = order.customerName || 'غير محدد';
-        const phone = order.phone || 'غير محدد';
-        const address = order.address || 'غير محدد';
-        const products = order.products || 'غير محدد';
-        const status = order.status || 'pending';
-        const dateText = order.createdAt ? new Date(order.createdAt).toLocaleString('ar-EG') : 'غير محدد';
+      // إذا كانت كائن (object) مفاتيح داخلية (map)
+      if (typeof raw === 'object') {
+        // حاول تحويلها إلى مصفوفة من القيم
+        const arr = Object.keys(raw).map(k => raw[k]);
+        return formatProductsField(arr);
+      }
 
-        // Utilisation sûre de innerHTML après échappement pour les champs dynamiques
-        orderItem.innerHTML = `
-          <h3>👤 ${escapeHtml(customerName)}</h3>
-          <p>📞 ${escapeHtml(phone)}</p>
-          <p>📍 ${escapeHtml(address)}</p>
-          <p>📦 ${escapeHtml(products)}</p>
-          <p class="status-${escapeHtml(status)}">🔄 الحالة: ${status === 'pending' ? 'قيد الانتظار' : 'مكتمل'}</p>
-          <p>📅 ${escapeHtml(dateText)}</p>
-          <div class="order-actions"></div>
-        `;
-
-        const actions = orderItem.querySelector('.order-actions');
-
-        if (status === 'pending') {
-          const completeBtn = document.createElement('button');
-          completeBtn.textContent = '✅ تم التوصيل';
-          completeBtn.addEventListener('click', () => updateOrderStatus(order.id, 'completed'));
-          actions.appendChild(completeBtn);
-        } else {
-          const undoBtn = document.createElement('button');
-          undoBtn.textContent = '↩️ إعادة إلى قيد الانتظار';
-          undoBtn.addEventListener('click', () => updateOrderStatus(order.id, 'pending'));
-          actions.appendChild(undoBtn);
-        }
-
-        const deleteBtn = document.createElement('button');
-        deleteBtn.textContent = '🗑️ حذف الطلب';
-        deleteBtn.addEventListener('click', () => {
-          if (confirm('هل تريد حقًا حذف هذا الطلب؟')) {
-            firebaseService.deleteOrder(order.id).then(res => {
-              if (res.success) loadDeliveryOrders();
-            });
-          }
-        });
-        actions.appendChild(deleteBtn);
-
-        ordersListEl.appendChild(orderItem);
-      });
+      // الافتراضي
+      return escapeHtml(String(raw));
     }
+
+    const productsHtml = formatProductsField(order.products || order.items || order.productsList);
+
+    // تاريخ
+    let dateText = '';
+    if (order.createdAt) {
+      try {
+        const num = Number(order.createdAt);
+        dateText = new Date(isNaN(num) ? order.createdAt : num).toLocaleString('ar-DZ');
+      } catch (e) {
+        dateText = escapeHtml(String(order.createdAt));
+      }
+    }
+
+    // بناء العنصر بطريقة آمنة (نستخدم escapeHtml للنصوص)
+    container.innerHTML = `
+      <h3>👤 ${escapeHtml(order.customerName || order.customer || 'مجهول')}</h3>
+      <p>📞 ${escapeHtml(order.phone || order.tel || '')}</p>
+      <p>📍 ${escapeHtml(order.address || order.location || '')}</p>
+      <div class="order-products">${productsHtml}</div>
+      <p class="order-status">🔄 الحالة: ${escapeHtml(order.status || 'pending') === 'pending' ? 'قيد الانتظار' : 'تم التوصيل'}</p>
+      <p>📅 ${dateText}</p>
+      <div class="order-actions"></div>
+    `;
+
+    // أزرار الإجراءات
+    const actionsEl = container.querySelector('.order-actions');
+
+    const completeBtn = document.createElement('button');
+    completeBtn.type = 'button';
+    completeBtn.textContent = (order.status === 'pending') ? '✅ تم التوصيل' : '↩️ إعادة إلى قيد الانتظار';
+    completeBtn.addEventListener('click', async () => {
+      const newStatus = (order.status === 'pending') ? 'completed' : 'pending';
+      const res = await window.firebaseService.updateOrderStatus(order.id, newStatus);
+      if (res && res.success) loadDeliveryOrders();
+      else alert('خطأ عند تحديث الحالة');
+    });
+    actionsEl.appendChild(completeBtn);
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '🗑️ حذف الطلب';
+    deleteBtn.addEventListener('click', async () => {
+      if (!confirm('هل تريد حذف هذا الطلب؟')) return;
+      const res = await window.firebaseService.deleteOrder(order.id);
+      if (res && res.success) loadDeliveryOrders();
+      else alert('خطأ عند حذف الطلب');
+    });
+    actionsEl.appendChild(deleteBtn);
+
+    ordersListEl.appendChild(container);
+  });
+}
+          
 
     async function loadDeliveryOrders() {
       ordersListEl.textContent = 'جاري التحميل...';
