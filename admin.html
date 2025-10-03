@@ -1,302 +1,113 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8" />
-  <title>لوحة الإدارة</title>
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <style>
-    /* Styles minimaux pour démonstration */
-    body { font-family: Arial, sans-serif; margin: 16px; }
-    .order-item { border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; }
-    .order-actions button { margin-left: 8px; }
-    .status-pending { color: orange; }
-    .status-completed { color: green; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة الإدارة - BENAKRAB Shopping</title>
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <h2>🚚 طلبات التوصيل</h2>
-  <div id="ordersList">جاري التحميل...</div>
+  <header>
+    <h1>📦 لوحة إدارة الطلبيات</h1>
+  </header>
 
-  <!-- Firebase compat SDKs: utiliser la version "compat" si vous employez l'API firebase.database() -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <main>
+    <section class="orders-section">
+      <h2>قائمة الطلبيات</h2>
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>رقم الطلب</th>
+            <th>اسم الزبون</th>
+            <th>العنوان</th>
+            <th>الهاتف</th>
+            <th>المنتجات</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody">
+          <tr><td colspan="7">⏳ جاري تحميل الطلبات...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer>
+    <p>© 2025 BENAKRAB Shopping - جميع الحقوق محفوظة</p>
+  </footer>
+
+  <!-- Firebase + الخدمات -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="js/firebase.js"></script>
 
   <script>
-    // ----- CONFIGURATION -----
-    // Remplacez les valeurs ci‑dessous par celles de votre console Firebase.
-    // Les clés côté client sont "publices" ; protégez vos données via les règles de la base.
-    const firebaseConfig = {
-      apiKey: "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
-      authDomain: "benakrab43.firebaseapp.com",
-      databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "benakrab43",
-      storageBucket: "benakrab43.appspot.com",
-      messagingSenderId: "751387344597",
-      appId: "1:123456789000:web:aaaaaaaaaaaaaaaaaaaaaa"
-    };
+    const ordersBody = document.getElementById("ordersBody");
 
-    // Initialiser Firebase (compat)
-    firebase.initializeApp(firebaseConfig);
+    // تحميل الطلبات من Firebase
+    async function loadOrders() {
+      ordersBody.innerHTML = "<tr><td colspan='7'>⏳ جاري تحميل الطلبات...</td></tr>";
+      const orders = await window.firebaseService.getDeliveryOrders();
 
-    // ----- SERVICE FIREBASE -----
-    class FirebaseService {
-      constructor() {
-        this.database = firebase.database();
+      if (!orders.length) {
+        ordersBody.innerHTML = "<tr><td colspan='7'>لا توجد طلبات.</td></tr>";
+        return;
       }
 
-      async addProduct(product) {
-        try {
-          const newRef = this.database.ref('products').push();
-          await newRef.set({
-            ...product,
-            id: newRef.key,
-            createdAt: firebase.database.ServerValue.TIMESTAMP
-          });
-          return { success: true, id: newRef.key };
-        } catch (err) {
-          console.error('addProduct error', err);
-          return { success: false, error: err.message };
-        }
-      }
-
-      async getProducts() {
-        try {
-          const snap = await this.database.ref('products').once('value');
-          const val = snap.val() || {};
-          return Object.keys(val).map(k => ({ id: k, ...val[k] }));
-        } catch (err) {
-          console.error('getProducts error', err);
-          return [];
-        }
-      }
-
-      async updateProduct(productId, updatedData) {
-        try {
-          await this.database.ref(`products/${productId}`).update(updatedData);
-          return { success: true };
-        } catch (err) {
-          console.error('updateProduct error', err);
-          return { success: false, error: err.message };
-        }
-      }
-
-      async deleteProduct(productId) {
-        try {
-          await this.database.ref(`products/${productId}`).remove();
-          return { success: true };
-        } catch (err) {
-          console.error('deleteProduct error', err);
-          return { success: false, error: err.message };
-        }
-      }
-
-      async getDeliveryOrders() {
-        try {
-          const snap = await this.database.ref('deliveryOrders').once('value');
-          const val = snap.val() || {};
-          return Object.keys(val).map(k => ({ id: k, ...val[k] }));
-        } catch (err) {
-          console.error('getDeliveryOrders error', err);
-          return [];
-        }
-      }
-
-      async updateOrderStatus(orderId, status) {
-        try {
-          await this.database.ref(`deliveryOrders/${orderId}`).update({ status });
-          return { success: true };
-        } catch (err) {
-          console.error('updateOrderStatus error', err);
-          return { success: false, error: err.message };
-        }
-      }
-
-      async deleteOrder(orderId) {
-        try {
-          await this.database.ref(`deliveryOrders/${orderId}`).remove();
-          return { success: true };
-        } catch (err) {
-          console.error('deleteOrder error', err);
-          return { success: false, error: err.message };
-        }
-      }
-    }
-
-    // ----- CODE D'INTERACTION UI -----
-    const firebaseService = new FirebaseService();
-    const ordersListEl = document.getElementById('ordersList');
-
-    // Fonction utilitaire pour échapper du texte afin d'éviter XSS si vous placez dans innerHTML
-    function escapeHtml(str) {
-      if (str == null) return '';
-      return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    // ---------------------------------------------
-// استخدم هذه الدالة لعرض قائمة الطلبات (Replace renderOrders)
-// ---------------------------------------------
-function renderOrders(orders) {
-  ordersListEl.innerHTML = '';
-
-  if (!orders || !orders.length) {
-    ordersListEl.textContent = 'لا توجد طلبات.';
-    return;
-  }
-
-  orders.forEach(order => {
-    const container = document.createElement('div');
-    container.className = 'order-item';
-
-    // helper: نجهز نص المنتجات بصورة مرنة
-    function formatProductsField(raw) {
-      if (!raw) return '<i>لا توجد منتجات</i>';
-
-      // إذا كان عبارة عن سلسلة نصية JSON
-      if (typeof raw === 'string') {
-        try {
-          const parsed = JSON.parse(raw);
-          return formatProductsField(parsed); // يدوّر معنا بالـ parsed
-        } catch (err) {
-          // ليست JSON => نعرض النص بعد هروب الأحرف
-          return escapeHtml(raw);
-        }
-      }
-
-      // إذا كانت مصفوفة
-      if (Array.isArray(raw)) {
-        if (raw.length === 0) return '<i>لا توجد منتجات</i>';
-        return raw.map(item => {
-          const name = escapeHtml(item.name || item.title || 'بدون اسم');
-          const color = escapeHtml(item.color || '');
-          const qty = escapeHtml(String(item.qty ?? item.quantity ?? 1));
-          const price = escapeHtml(String(item.unitPrice ?? item.price ?? '0'));
-          return `
-            <div class="order-product">
-              🛍️ <b>${name}</b><br>
-              ▪️ اللون: ${color || '-'} &nbsp; | &nbsp;
-              ▪️ الكمية: ${qty} &nbsp; | &nbsp;
-              ▪️ السعر: ${price} دج
-            </div>
-          `;
-        }).join('<br>');
-      }
-
-      // إذا كانت كائن (object) مفاتيح داخلية (map)
-      if (typeof raw === 'object') {
-        // حاول تحويلها إلى مصفوفة من القيم
-        const arr = Object.keys(raw).map(k => raw[k]);
-        return formatProductsField(arr);
-      }
-
-      // الافتراضي
-      return escapeHtml(String(raw));
-    }
-
-    const productsHtml = formatProductsField(order.products || order.items || order.productsList);
-
-    // تاريخ
-    let dateText = '';
-    if (order.createdAt) {
-      try {
-        const num = Number(order.createdAt);
-        dateText = new Date(isNaN(num) ? order.createdAt : num).toLocaleString('ar-DZ');
-      } catch (e) {
-        dateText = escapeHtml(String(order.createdAt));
-      }
-    }
-
-    // بناء العنصر بطريقة آمنة (نستخدم escapeHtml للنصوص)
-    container.innerHTML = `
-      <h3>👤 ${escapeHtml(order.customerName || order.customer || 'مجهول')}</h3>
-      <p>📞 ${escapeHtml(order.phone || order.tel || '')}</p>
-      <p>📍 ${escapeHtml(order.address || order.location || '')}</p>
-      <div class="order-products">${productsHtml}</div>
-      <p class="order-status">🔄 الحالة: ${escapeHtml(order.status || 'pending') === 'pending' ? 'قيد الانتظار' : 'تم التوصيل'}</p>
-      <p>📅 ${dateText}</p>
-      <div class="order-actions"></div>
-    `;
-
-    // أزرار الإجراءات
-    const actionsEl = container.querySelector('.order-actions');
-
-    const completeBtn = document.createElement('button');
-    completeBtn.type = 'button';
-    completeBtn.textContent = (order.status === 'pending') ? '✅ تم التوصيل' : '↩️ إعادة إلى قيد الانتظار';
-    completeBtn.addEventListener('click', async () => {
-      const newStatus = (order.status === 'pending') ? 'completed' : 'pending';
-      const res = await window.firebaseService.updateOrderStatus(order.id, newStatus);
-      if (res && res.success) loadDeliveryOrders();
-      else alert('خطأ عند تحديث الحالة');
-    });
-    actionsEl.appendChild(completeBtn);
-
-    const deleteBtn = document.createElement('button');
-    deleteBtn.type = 'button';
-    deleteBtn.textContent = '🗑️ حذف الطلب';
-    deleteBtn.addEventListener('click', async () => {
-      if (!confirm('هل تريد حذف هذا الطلب؟')) return;
-      const res = await window.firebaseService.deleteOrder(order.id);
-      if (res && res.success) loadDeliveryOrders();
-      else alert('خطأ عند حذف الطلب');
-    });
-    actionsEl.appendChild(deleteBtn);
-
-    ordersListEl.appendChild(container);
-  });
-}
-          
-
-    async function loadDeliveryOrders() {
-      ordersListEl.textContent = 'جاري التحميل...';
-      const orders = await firebaseService.getDeliveryOrders();
-      renderOrders(orders);
-    }
-
-    async function updateOrderStatus(orderId, status) {
-      const res = await firebaseService.updateOrderStatus(orderId, status);
-      if (res.success) {
-        await loadDeliveryOrders();
-      } else {
-        alert('خطأ عند تحديث حالة الطلب: ' + (res.error || 'Unknown'));
-      }
-    }
-
-    // Initial load
-   // document.addEventListener('DOMContentLoaded', () => {
-     // loadDeliveryOrders();
-   // });
-
-<script>
-document.addEventListener("DOMContentLoaded", function () {
-    // زر تم التوصيل
-    document.querySelectorAll(".delivered-btn").forEach(button => {
-        button.addEventListener("click", function () {
-            alert("✅ تم تأكيد التوصيل بنجاح!");
-            this.closest("tr").style.backgroundColor = "#d4edda"; // تلوين الصف كإشارة للتوصيل
-        });
-    });
-
-    // زر حذف الطلبية
-    document.querySelectorAll(".delete-btn").forEach(button => {
-        button.addEventListener("click", function () {
-            if (confirm("هل تريد فعلاً حذف هذه الطلبية؟")) {
-                this.closest("tr").remove(); // يحذف الصف من الجدول
+      ordersBody.innerHTML = "";
+      orders.forEach(order => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.customerName || ""}</td>
+          <td>${order.address || ""}</td>
+          <td>${order.phone || ""}</td>
+          <td>
+            ${
+              Array.isArray(order.products)
+                ? order.products.map(p => `${p.name} (x${p.qty})`).join("<br>")
+                : ""
             }
-        });
-    });
-});
+          </td>
+          <td>${order.status === "completed" ? "✅ تم التوصيل" : "⏳ قيد الانتظار"}</td>
+          <td>
+            ${
+              order.status === "pending"
+                ? `<button onclick="markDelivered('${order.id}')">✅ تم التوصيل</button>`
+                : `<button onclick="markPending('${order.id}')">↩️ إرجاع للانتظار</button>`
+            }
+            <button onclick="deleteOrder('${order.id}')">🗑️ حذف</button>
+          </td>
+        `;
+        ordersBody.appendChild(row);
+      });
+    }
 
+    // تغيير الحالة إلى "تم التوصيل"
+    async function markDelivered(orderId) {
+      const res = await window.firebaseService.updateOrderStatus(orderId, "completed");
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في تحديث الحالة");
+    }
 
+    // إرجاع الطلبية إلى الانتظار
+    async function markPending(orderId) {
+      const res = await window.firebaseService.updateOrderStatus(orderId, "pending");
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في تحديث الحالة");
+    }
 
+    // حذف الطلب
+    async function deleteOrder(orderId) {
+      if (!confirm("هل تريد حذف هذا الطلب؟")) return;
+      const res = await window.firebaseService.deleteOrder(orderId);
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في حذف الطلب");
+    }
 
-
-
-    
+    // تحميل أولي
+    document.addEventListener("DOMContentLoaded", loadOrders);
   </script>
 </body>
 </html>
