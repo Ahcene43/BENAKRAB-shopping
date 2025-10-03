@@ -86,4 +86,3 @@ class FirebaseService {
 
 // إنشاء instance من الخدمة
 const firebaseService = new FirebaseService();
-
