@@ -16,23 +16,57 @@
 
   function escapeHtml(str) {
     if (str == null) return '';
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#039;');
+    return String(str)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&#039;');
   }
 
+  // 🔹 إصلاح عرض الطلبات
   function renderOrders(orders) {
     ordersListEl.innerHTML = '';
-    if (!orders || !orders.length) { ordersListEl.textContent = 'لا توجد طلبات.'; return; }
+    if (!orders || !orders.length) { 
+      ordersListEl.textContent = 'لا توجد طلبات.'; 
+      return; 
+    }
+
     orders.forEach(order => {
       const item = document.createElement('div');
       item.className = 'order-item';
+
+      // ✅ معالجة قائمة المنتجات
+      let productsHtml = '';
+      try {
+        const items = typeof order.products === 'string' 
+          ? JSON.parse(order.products) 
+          : order.products;
+
+        if (Array.isArray(items)) {
+          productsHtml = items.map(p => `
+            🛍️ <b>${escapeHtml(p.name)}</b><br>
+            ▪️ اللون: ${escapeHtml(p.color)}<br>
+            ▪️ الكمية: ${escapeHtml(p.qty)}<br>
+            ▪️ السعر: ${escapeHtml(p.unitPrice)} دج
+          `).join('<br><br>');
+        }
+      } catch (e) {
+        productsHtml = '<i>خطأ في قراءة تفاصيل المنتجات</i>';
+      }
+
       item.innerHTML = `
         <h3>👤 ${escapeHtml(order.customerName || '')}</h3>
         <p>📞 ${escapeHtml(order.phone || '')}</p>
         <p>📍 ${escapeHtml(order.address || '')}</p>
-        <p>📦 ${escapeHtml(order.products || '')}</p>
-        <p class="status-${escapeHtml(order.status || 'pending')}">🔄 الحالة: ${order.status === 'pending' ? 'قيد الانتظار' : 'مكتمل'}</p>
+        <div class="order-products">${productsHtml}</div>
+        <p class="status-${escapeHtml(order.status || 'pending')}">
+          🔄 الحالة: ${order.status === 'pending' ? 'قيد الانتظار' : 'تم التوصيل'}
+        </p>
+        <p>📅 ${new Date(order.createdAt).toLocaleString("ar-DZ")}</p>
         <div class="order-actions"></div>
       `;
+
       const actions = item.querySelector('.order-actions');
       if (order.status === 'pending') {
         const completeBtn = document.createElement('button');
@@ -51,6 +85,7 @@
         });
         actions.appendChild(revertBtn);
       }
+
       const delBtn = document.createElement('button');
       delBtn.textContent = '🗑️ حذف الطلب';
       delBtn.addEventListener('click', async () => {
@@ -59,6 +94,7 @@
         loadDeliveryOrders();
       });
       actions.appendChild(delBtn);
+
       ordersListEl.appendChild(item);
     });
   }
@@ -78,7 +114,7 @@
       const div = document.createElement('div');
       div.className = 'product-item';
       div.innerHTML = `
-        <img src="${p.image}" alt="${p.name}" style="max-width:120px;">
+        <img src="${p.image}" alt="${escapeHtml(p.name)}" style="max-width:120px;">
         <h3>${escapeHtml(p.name)}</h3>
         <p>${p.price} دج</p>
         <p>${escapeHtml(p.category || '')}</p>
@@ -88,7 +124,7 @@
     });
   }
 
-  // Expose functions globally used by inline onclicks in admin.html
+  // Expose functions globally
   window.loadProducts = loadProducts;
   window.loadOrders = loadDeliveryOrders;
   window.deleteProduct = async function(productId) {
