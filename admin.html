@@ -8,64 +8,63 @@
   <style>
     body {
       font-family: "Cairo", sans-serif;
-      background: #f7f9fc;
+      background: #f8f9fa;
       margin: 0;
       padding: 0;
-      color: #333;
     }
     header {
-      background: #4a90e2;
+      background: #007bff;
       color: white;
-      padding: 1rem;
+      padding: 15px;
       text-align: center;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     }
     h1 { margin: 0; }
-    main { padding: 2rem; }
-
-    .orders-table {
-      width: 100%;
+    table {
+      width: 95%;
+      margin: 20px auto;
       border-collapse: collapse;
       background: white;
-      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      border-radius: 8px;
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
     }
-    .orders-table th, .orders-table td {
-      padding: 12px 15px;
-      border-bottom: 1px solid #eee;
+    th, td {
+      padding: 12px;
       text-align: center;
+      border-bottom: 1px solid #ddd;
     }
-    .orders-table thead {
-      background: #f0f4f8;
+    th {
+      background: #007bff;
+      color: white;
     }
-    .orders-table tr:hover {
-      background: #f9fbfd;
-    }
-
-    .status-pending {
-      color: #ff9800;
-      font-weight: bold;
-    }
-    .status-completed {
-      color: #4caf50;
-      font-weight: bold;
-    }
-
-    button {
+    tr:hover { background: #f1f1f1; }
+    .delivered-btn {
+      background: #28a745;
+      color: white;
       border: none;
       padding: 6px 12px;
       margin: 2px;
-      border-radius: 6px;
       cursor: pointer;
-      font-size: 0.9rem;
-      transition: 0.2s;
+      border-radius: 5px;
     }
-    button:hover { opacity: 0.9; }
-
-    .btn-deliver { background: #4caf50; color: white; }
-    .btn-pending { background: #ff9800; color: white; }
-    .btn-delete { background: #f44336; color: white; }
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      margin: 2px;
+      cursor: pointer;
+      border-radius: 5px;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul li {
+      text-align: right;
+      padding: 3px 0;
+    }
   </style>
 </head>
 <body>
@@ -74,9 +73,8 @@
   </header>
 
   <main>
-    <section class="orders-section">
-      <h2>قائمة الطلبيات</h2>
-      <table class="orders-table">
+    <section>
+      <table>
         <thead>
           <tr>
             <th>رقم الطلب</th>
@@ -84,87 +82,99 @@
             <th>العنوان</th>
             <th>الهاتف</th>
             <th>المنتجات</th>
+            <th>الإجمالي</th>
             <th>الحالة</th>
             <th>إجراءات</th>
           </tr>
         </thead>
-        <tbody id="ordersBody">
-          <tr><td colspan="7">⏳ جاري تحميل الطلبات...</td></tr>
+        <tbody id="ordersTable">
+          <!-- الطلبيات ستظهر هنا من Firebase -->
         </tbody>
       </table>
     </section>
   </main>
 
-  <footer style="text-align:center; padding:1rem; background:#eee; margin-top:2rem;">
+  <footer style="text-align:center; padding:10px; background:#f1f1f1;">
     <p>© 2025 BENAKRAB Shopping - جميع الحقوق محفوظة</p>
   </footer>
 
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-  <script src="js/firebase.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database.js"></script>
 
   <script>
-    const ordersBody = document.getElementById("ordersBody");
+    // 🔹 إعداد Firebase
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      databaseURL: "YOUR_DATABASE_URL",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
 
-    async function loadOrders() {
-      ordersBody.innerHTML = "<tr><td colspan='7'>⏳ جاري تحميل الطلبات...</td></tr>";
-      const orders = await window.firebaseService.getDeliveryOrders();
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-      if (!orders.length) {
-        ordersBody.innerHTML = "<tr><td colspan='7'>لا توجد طلبات.</td></tr>";
-        return;
-      }
+    const ordersTable = document.getElementById("ordersTable");
 
-      ordersBody.innerHTML = "";
-      orders.forEach(order => {
+    // 🔹 جلب الطلبيات من Firebase
+    db.ref("orders").on("value", snapshot => {
+      ordersTable.innerHTML = ""; // مسح الجدول قبل التحديث
+      let index = 1;
+      snapshot.forEach(orderSnap => {
+        const order = orderSnap.val();
+        const orderId = orderSnap.key;
+
+        // 🛒 حساب الإجمالي
+        let total = 0;
+        let productsHTML = "<ul>";
+        if (order.products) {
+          order.products.forEach(p => {
+            total += p.price * p.quantity;
+            productsHTML += `<li>${p.name} × ${p.quantity} = ${p.price * p.quantity} دج</li>`;
+          });
+        }
+        productsHTML += "</ul>";
+
+        // 📝 إنشاء الصف
         const row = document.createElement("tr");
         row.innerHTML = `
-          <td>${order.id}</td>
-          <td>${order.customerName || ""}</td>
-          <td>${order.address || ""}</td>
-          <td>${order.phone || ""}</td>
+          <td>${index++}</td>
+          <td>${order.customerName}</td>
+          <td>${order.address}</td>
+          <td>${order.phone}</td>
+          <td>${productsHTML}</td>
+          <td>${total} دج</td>
+          <td>${order.status || "قيد المعالجة"}</td>
           <td>
-            ${
-              Array.isArray(order.products)
-                ? order.products.map(p => `${p.name} (x${p.qty})`).join("<br>")
-                : ""
-            }
-          </td>
-          <td class="status-${order.status}">
-            ${order.status === "completed" ? "✅ تم التوصيل" : "⏳ قيد الانتظار"}
-          </td>
-          <td>
-            ${
-              order.status === "pending"
-                ? `<button class="btn-deliver" onclick="markDelivered('${order.id}')">✅ تم التوصيل</button>`
-                : `<button class="btn-pending" onclick="markPending('${order.id}')">↩️ إرجاع للانتظار</button>`
-            }
-            <button class="btn-delete" onclick="deleteOrder('${order.id}')">🗑️ حذف</button>
+            <button class="delivered-btn" data-id="${orderId}">تم التوصيل</button>
+            <button class="delete-btn" data-id="${orderId}">حذف</button>
           </td>
         `;
-        ordersBody.appendChild(row);
+        ordersTable.appendChild(row);
       });
-    }
 
-    async function markDelivered(orderId) {
-      const res = await window.firebaseService.updateOrderStatus(orderId, "completed");
-      if (res.success) loadOrders();
-      else alert("❌ خطأ في تحديث الحالة");
-    }
-    async function markPending(orderId) {
-      const res = await window.firebaseService.updateOrderStatus(orderId, "pending");
-      if (res.success) loadOrders();
-      else alert("❌ خطأ في تحديث الحالة");
-    }
-    async function deleteOrder(orderId) {
-      if (!confirm("هل تريد حذف هذا الطلب؟")) return;
-      const res = await window.firebaseService.deleteOrder(orderId);
-      if (res.success) loadOrders();
-      else alert("❌ خطأ في حذف الطلب");
-    }
+      // 🔹 حدث الأزرار بعد تحميل البيانات
+      document.querySelectorAll(".delivered-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const id = this.dataset.id;
+          db.ref("orders/" + id).update({ status: "تم التوصيل" });
+          alert("✅ تم تأكيد التوصيل!");
+        });
+      });
 
-    document.addEventListener("DOMContentLoaded", loadOrders);
+      document.querySelectorAll(".delete-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const id = this.dataset.id;
+          if (confirm("هل تريد فعلاً حذف هذه الطلبية؟")) {
+            db.ref("orders/" + id).remove();
+          }
+        });
+      });
+
+    });
   </script>
 </body>
 </html>
