@@ -4,15 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>👕 مود كيدز - أزياء الأطفال الفاخرة</title>
+
+  <!-- Fonts & Icons -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- CSS -->
   <link rel="stylesheet" href="css/style.css">
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+
+  <!-- Firebase SDK (compat for Realtime DB used here) -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js" defer></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js" defer></script>
+
+  <!-- Your Firebase config will be initialized in firebase.js (loaded later) -->
 </head>
 <body>
   <header id="mainHeader">
@@ -42,7 +48,6 @@
     </div>
   </header>
 
-  <!-- قسم الهيرو الجذاب -->
   <section class="hero">
     <div class="hero-content">
       <h1>أزياء الأطفال التي تستحق الابتسامة</h1>
@@ -55,22 +60,16 @@
   </section>
 
   <div class="container">
-    <!-- سلايدر المنتجات المصحح -->
     <section class="slider-section">
       <h2 class="section-title">أحدث تشكيلاتنا للأطفال</h2>
       <div class="slideshow-container">
         <button class="slider-arrow prev" id="prevSlide">❮</button>
-        <div class="slides-container" id="slidesContainer">
-          <!-- سيتم ملؤها ديناميكياً من JavaScript -->
-        </div>
+        <div class="slides-container" id="slidesContainer"></div>
         <button class="slider-arrow next" id="nextSlide">❯</button>
       </div>
-      <div class="slider-nav" id="sliderNav">
-        <!-- سيتم ملؤها ديناميكياً من JavaScript -->
-      </div>
+      <div class="slider-nav" id="sliderNav"></div>
     </section>
 
-    <!-- شريط التقدم -->
     <section class="progress-section">
       <div class="progress-bar">
         <div class="progress-step active" data-step="1">
@@ -88,29 +87,18 @@
       </div>
     </section>
 
-    <!-- نموذج الطلب -->
     <form id="orderForm">
-      <!-- الخطوة 1: اختيار المنتجات -->
+      <!-- STEP 1 -->
       <section class="form-section" id="step1">
         <h2 class="form-title"><i class="fas fa-shopping-cart"></i> اختر منتجاتك</h2>
-        
-        <div class="pieces-container" id="piecesContainer">
-          <!-- سيتم إضافة القطع ديناميكياً هنا -->
-        </div>
-        
-        <div class="form-group">
-          <label for="daire">___________________________</label>
-        </div>
-          
+        <div class="pieces-container" id="piecesContainer"></div>
+
         <button type="button" id="addPieceBtn" class="btn btn-secondary btn-full">
           <i class="fas fa-plus"></i> أضف إلى السلة 
         </button>
-        
+
         <div class="form-group">
-          <label for="daire">___________________________</label>
-          
           <label for="wilaya"><i class="fas fa-map-marker-alt"></i>  اختر الولاية لمعرفة سعر التوصيل</label>
-          
           <div class="input-with-icon">
             <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
             <select id="wilaya" name="wilaya" required>
@@ -118,7 +106,7 @@
             </select>
           </div>
         </div>
-        
+
         <div class="form-group">
           <label for="deliveryType"><i class="fas fa-truck"></i> نوع التوصيل</label>
           <div class="input-with-icon">
@@ -130,7 +118,6 @@
           </div>
         </div>
 
-        <!-- عرض السعر -->
         <div class="price-box">
           <div class="price-header">
             <i class="fas fa-receipt"></i>
@@ -161,7 +148,7 @@
             <span id="discountAmount">-300 دج</span>
           </div>
         </div>
-        
+
         <div class="btn-group">
           <button type="button" id="nextToStep2" class="btn btn-primary">
             التالي <i class="fas fa-arrow-left"></i>
@@ -169,10 +156,10 @@
         </div>
       </section>
 
-      <!-- الخطوة 2: المعلومات الشخصية -->
+      <!-- STEP 2 -->
       <section class="form-section personal-section" id="step2">
         <h2 class="form-title"><i class="fas fa-user"></i> معلومات الاتصال</h2>
-        
+
         <div class="form-group">
           <label for="name">الاسم الكامل</label>
           <div class="input-with-icon">
@@ -180,7 +167,7 @@
             <input type="text" id="name" name="name" required autocomplete="name">
           </div>
         </div>
-        
+
         <div class="form-group">
           <label for="phone">رقم الهاتف</label>
           <div class="input-with-icon">
@@ -189,7 +176,7 @@
           </div>
           <small style="color: var(--gray); display: block; margin-top: 0.25rem;">يجب أن يتكون من 10 أرقام</small>
         </div>
-        
+
         <div class="form-group">
           <label for="daire">الدائرة</label>
           <div class="input-with-icon">
@@ -197,7 +184,7 @@
             <input type="text" id="daire" name="daire" required autocomplete="address-level3">
           </div>
         </div>
-        
+
         <div class="form-group">
           <label for="address">العنوان الكامل</label>
           <div class="input-with-icon">
@@ -206,7 +193,6 @@
           </div>
         </div>
 
-        <!-- زر مسح البيانات المحفوظة -->
         <div class="form-group" style="text-align: center; margin-top: 1rem;">
           <button type="button" id="clearSavedData" class="clear-data-btn">
             <i class="fas fa-trash"></i> مسح البيانات المحفوظة
@@ -223,17 +209,15 @@
         </div>
       </section>
 
-      <!-- الخطوة 3: تأكيد الطلب -->
+      <!-- STEP 3 -->
       <section class="form-section personal-section" id="step3">
         <h2 class="form-title"><i class="fas fa-check-circle"></i> تأكيد الطلب</h2>
-        
+
         <div class="order-summary">
           <h3 class="summary-title">ملخص طلبك</h3>
-          <div id="orderSummary">
-            <!-- سيتم ملؤها ديناميكياً -->
-          </div>
+          <div id="orderSummary"></div>
         </div>
-        
+
         <div class="form-group">
           <label for="notes"><i class="fas fa-sticky-note"></i> ملاحظات إضافية (اختياري)</label>
           <textarea id="notes" name="notes" rows="3" placeholder="أي ملاحظات إضافية حول الطلب..."></textarea>
@@ -249,7 +233,6 @@
         </div>
       </section>
 
-      <!-- شاشة التحميل المحسنة -->
       <div class="loading" id="loading">
         <div class="loading-spinner"></div>
         <p><i class="fas fa-spinner fa-spin"></i> جاري معالجة طلبك...</p>
@@ -258,14 +241,11 @@
     </form>
   </div>
 
-  <!-- مودال النجاح -->
   <div class="modal" id="successModal">
     <div class="modal-content">
-      <!-- زر الإغلاق المضاف -->
       <button class="modal-close" onclick="app.closeModal()">
         <i class="fas fa-times"></i>
       </button>
-      
       <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
       <h2 class="modal-title">تم استقبال طلبك بنجاح!</h2>
       <div class="modal-body">
@@ -273,34 +253,16 @@
         <p><i class="fas fa-phone"></i> سيتواصل معك فريق المبيعات قريباً لتأكيد الطلب وتفاصيل التوصيل.</p>
         <div class="order-summary">
           <h3 class="summary-title">تفاصيل طلبك</h3>
-          <div id="modalOrderSummary">
-            <!-- سيتم ملؤها ديناميكياً -->
-          </div>
+          <div id="modalOrderSummary"></div>
         </div>
       </div>
       <button class="btn btn-primary btn-full" onclick="app.closeModal()">موافق</button>
     </div>
   </div>
 
-  <!-- تهيئة Firebase -->
-  <script>
-    // استبدل هذه القيم ببيانات مشروعك من Firebase Console
-    const firebaseConfig = {
-      apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
-      authDomain: "benakrab43.firebaseapp.com",
-      databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
-      projectId: "benakrab43",
-      storageBucket: "benakrab43.appspot.com",
-      messagingSenderId: "751387344597",
-      appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
-    };
-
-    // تهيئة Firebase
-    firebase.initializeApp(firebaseConfig);
-  </script>
-
-  <!-- السكريبتات -->
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+  <!-- Firebase init + service (firebase.js) must be loaded after SDK -->
+  <script src="js/firebase.js" defer></script>
+  <script src="js/data.js" defer></script>
+  <script src="js/app.js" defer></script>
 </body>
 </html>
