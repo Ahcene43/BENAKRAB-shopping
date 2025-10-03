@@ -267,9 +267,36 @@ function renderOrders(orders) {
     }
 
     // Initial load
-    document.addEventListener('DOMContentLoaded', () => {
-      loadDeliveryOrders();
+   // document.addEventListener('DOMContentLoaded', () => {
+     // loadDeliveryOrders();
+   // });
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    // زر تم التوصيل
+    document.querySelectorAll(".delivered-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            alert("✅ تم تأكيد التوصيل بنجاح!");
+            this.closest("tr").style.backgroundColor = "#d4edda"; // تلوين الصف كإشارة للتوصيل
+        });
     });
+
+    // زر حذف الطلبية
+    document.querySelectorAll(".delete-btn").forEach(button => {
+        button.addEventListener("click", function () {
+            if (confirm("هل تريد فعلاً حذف هذه الطلبية؟")) {
+                this.closest("tr").remove(); // يحذف الصف من الجدول
+            }
+        });
+    });
+});
+
+
+
+
+
+
+    
   </script>
 </body>
 </html>
