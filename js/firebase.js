@@ -1,88 +1,125 @@
 // js/firebase.js
-class FirebaseService {
+// تأكد من تحميل Firebase SDK قبل هذا الملف (تم في index.html)
+
+(function () {
+  // ضع هنا إعدادات المشروع الحقيقية الخاصة بك
+  const firebaseConfig = {
+    apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
+    authDomain: "benakrab43.firebaseapp.com",
+    databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "benakrab43",
+    storageBucket: "benakrab43.appspot.com",
+    messagingSenderId: "751387344597",
+    appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
+  };
+
+  // Initialize Firebase (compat)
+  if (!firebase.apps || !firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
+
+  class FirebaseService {
     constructor() {
-        this.database = firebase.database();
+      this.database = firebase.database();
     }
 
-    // حفظ منتج جديد
+    // Products
     async addProduct(product) {
-        try {
-            const newProductRef = this.database.ref('products').push();
-            await newProductRef.set({
-                ...product,
-                id: newProductRef.key,
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            });
-            return { success: true, id: newProductRef.key };
-        } catch (error) {
-            console.error('Error adding product:', error);
-            return { success: false, error: error.message };
-        }
+      try {
+        const newRef = this.database.ref('products').push();
+        await newRef.set({
+          ...product,
+          id: newRef.key,
+          createdAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        return { success: true, id: newRef.key };
+      } catch (err) {
+        console.error('addProduct error', err);
+        return { success: false, error: err.message };
+      }
     }
 
-    // جلب جميع المنتجات
     async getProducts() {
-        try {
-            const snapshot = await this.database.ref('products').once('value');
-            const products = snapshot.val();
-            return products ? Object.values(products) : [];
-        } catch (error) {
-            console.error('Error getting products:', error);
-            return [];
-        }
+      try {
+        const snap = await this.database.ref('products').once('value');
+        const val = snap.val() || {};
+        // return as array
+        return Object.keys(val).map(k => ({ id: k, ...val[k] }));
+      } catch (err) {
+        console.error('getProducts error', err);
+        return [];
+      }
     }
 
-    // تحديث منتج
     async updateProduct(productId, updatedData) {
-        try {
-            await this.database.ref(`products/${productId}`).update(updatedData);
-            return { success: true };
-        } catch (error) {
-            console.error('Error updating product:', error);
-            return { success: false, error: error.message };
-        }
+      try {
+        await this.database.ref(`products/${productId}`).update(updatedData);
+        return { success: true };
+      } catch (err) {
+        console.error('updateProduct error', err);
+        return { success: false, error: err.message };
+      }
     }
 
-    // حذف منتج
     async deleteProduct(productId) {
-        try {
-            await this.database.ref(`products/${productId}`).remove();
-            return { success: true };
-        } catch (error) {
-            console.error('Error deleting product:', error);
-            return { success: false, error: error.message };
-        }
+      try {
+        await this.database.ref(`products/${productId}`).remove();
+        return { success: true };
+      } catch (err) {
+        console.error('deleteProduct error', err);
+        return { success: false, error: err.message };
+      }
     }
 
-    // جلب طلبات التوصيل
+    // Orders (use "deliveryOrders" to be consistent with admin)
     async getDeliveryOrders() {
-        try {
-            const snapshot = await this.database.ref('deliveryOrders').once('value');
-            const orders = snapshot.val();
-            return orders ? Object.values(orders) : [];
-        } catch (error) {
-            console.error('Error getting orders:', error);
-            return [];
-        }
+      try {
+        const snap = await this.database.ref('deliveryOrders').once('value');
+        const val = snap.val() || {};
+        return Object.keys(val).map(k => ({ id: k, ...val[k] }));
+      } catch (err) {
+        console.error('getDeliveryOrders error', err);
+        return [];
+      }
     }
 
-    // إضافة طلب توصيل جديد
     async addDeliveryOrder(order) {
-        try {
-            const newOrderRef = this.database.ref('deliveryOrders').push();
-            await newOrderRef.set({
-                ...order,
-                id: newOrderRef.key,
-                status: 'pending',
-                createdAt: firebase.database.ServerValue.TIMESTAMP
-            });
-            return { success: true, id: newOrderRef.key };
-        } catch (error) {
-            console.error('Error adding order:', error);
-            return { success: false, error: error.message };
-        }
+      try {
+        const newRef = this.database.ref('deliveryOrders').push();
+        await newRef.set({
+          ...order,
+          id: newRef.key,
+          status: 'pending',
+          createdAt: firebase.database.ServerValue.TIMESTAMP
+        });
+        return { success: true, id: newRef.key };
+      } catch (err) {
+        console.error('addDeliveryOrder error', err);
+        return { success: false, error: err.message };
+      }
     }
-}
 
-// إنشاء instance من الخدمة
-const firebaseService = new FirebaseService();
+    async updateOrderStatus(orderId, status) {
+      try {
+        await this.database.ref(`deliveryOrders/${orderId}`).update({ status });
+        return { success: true };
+      } catch (err) {
+        console.error('updateOrderStatus error', err);
+        return { success: false, error: err.message };
+      }
+    }
+
+    async deleteOrder(orderId) {
+      try {
+        await this.database.ref(`deliveryOrders/${orderId}`).remove();
+        return { success: true };
+      } catch (err) {
+        console.error('deleteOrder error', err);
+        return { success: false, error: err.message };
+      }
+    }
+  }
+
+  // expose instance globally
+  window.firebaseService = new FirebaseService();
+})();
