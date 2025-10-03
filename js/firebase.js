@@ -121,5 +121,45 @@
   }
 
   // expose instance globally
-  window.firebaseService = new FirebaseService();
-})();
+  window.firebaseService = {
+  // دالة جلب الطلبات
+  async getDeliveryOrders() {
+    const snapshot = await this.database.ref('deliveryOrders').once('value');
+    const orders = [];
+    snapshot.forEach(child => {
+      orders.push({ id: child.key, ...child.val() });
+    });
+    return orders;
+  },
+
+  // 🔹 أضف هنا
+  async updateOrderStatus(orderId, status) {
+    try {
+      await this.database.ref(`deliveryOrders/${orderId}`).update({ status });
+      return { success: true };
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  async deleteOrder(orderId) {
+    try {
+      await this.database.ref(`deliveryOrders/${orderId}`).remove();
+      return { success: true };
+    } catch (error) {
+      console.error('Error deleting order:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // مثال: دالة جلب المنتجات
+  async getProducts() {
+    const snapshot = await this.database.ref('products').once('value');
+    const products = [];
+    snapshot.forEach(child => {
+      products.push({ id: child.key, ...child.val() });
+    });
+    return products;
+  }
+};
