@@ -1,1 +1,193 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+@@ -196,40 +197,138 @@ <h2>🚚 طلبات التوصيل</h2>
+            </div>
+        </section>
+    </div>
+<script type="module">
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+     
+    
+    
+const firebaseConfig = {
+   
+    apiKey: "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    authDomain: "benakrab43.firebaseapp.com",
+    databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "benakrab43",
+    storageBucket: "benakrab43.appspot.com",
+    messagingSenderId: "751387344597",
+    // Make sure to get your actual App ID from the Firebase Console!
+    appId: "1:123456789000:web:aaaaaaaaaaaaaaaaaaaaaa"
+
+    <script>
+        // التهيئة - استبدل بالقيم الحقيقية من Firebase Console
+        const firebaseConfig = {
+            apiKey: "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+            authDomain: "benakrab43.firebaseapp.com",
+            databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "benakrab43",
+            storageBucket: "benakrab43.appspot.com",
+            messagingSenderId: "751387344597",
+            appId: "1:123456789000:web:aaaaaaaaaaaaaaaaaaaaaa"
+};
+
+// Initialize Firebase
+initializeApp(firebaseConfig);
+        // تهيئة Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+
+       
+        
+   
+    <!-- ملف Firebase Service -->
+    <script>
+        // js/firebase.js - بدلاً من ملف منفصل
+        class FirebaseService {
+            constructor() {
+                this.database = firebase.database();
+            }
+
+            // حفظ منتج جديد
+            async addProduct(product) {
+                try {
+                    const newProductRef = this.database.ref('products').push();
+                    await newProductRef.set({
+                        ...product,
+                        id: newProductRef.key,
+                        createdAt: firebase.database.ServerValue.TIMESTAMP
+                    });
+                    return { success: true, id: newProductRef.key };
+                } catch (error) {
+                    console.error('Error adding product:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // جلب جميع المنتجات
+            async getProducts() {
+                try {
+                    const snapshot = await this.database.ref('products').once('value');
+                    const products = snapshot.val();
+                    if (products) {
+                        return Object.keys(products).map(key => ({
+                            id: key,
+                            ...products[key]
+                        }));
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('Error getting products:', error);
+                    return [];
+                }
+            }
+
+            // تحديث منتج
+            async updateProduct(productId, updatedData) {
+                try {
+                    await this.database.ref(`products/${productId}`).update(updatedData);
+                    return { success: true };
+                } catch (error) {
+                    console.error('Error updating product:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // حذف منتج
+            async deleteProduct(productId) {
+                try {
+                    await this.database.ref(`products/${productId}`).remove();
+                    return { success: true };
+                } catch (error) {
+                    console.error('Error deleting product:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // جلب طلبات التوصيل
+            async getDeliveryOrders() {
+                try {
+                    const snapshot = await this.database.ref('deliveryOrders').once('value');
+                    const orders = snapshot.val();
+                    if (orders) {
+                        return Object.keys(orders).map(key => ({
+                            id: key,
+                            ...orders[key]
+                        }));
+                    }
+                    return [];
+                } catch (error) {
+                    console.error('Error getting orders:', error);
+                    return [];
+                }
+            }
+
+            // تحديث حالة الطلب
+            async updateOrderStatus(orderId, status) {
+                try {
+                    await this.database.ref(`deliveryOrders/${orderId}`).update({ status });
+                    return { success: true };
+                } catch (error) {
+                    console.error('Error updating order:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+
+            // حذف طلب
+            async deleteOrder(orderId) {
+                try {
+                    await this.database.ref(`deliveryOrders/${orderId}`).remove();
+                    return { success: true };
+                } catch (error) {
+                    console.error('Error deleting order:', error);
+                    return { success: false, error: error.message };
+                }
+            }
+        }
+
+    <!-- الملفات البرمجية -->
+    <script src="js/firebase.js"></script>
+    <script src="js/admin.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js"></script>
+     <script src="https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js"></script>
+        // إنشاء instance عام
+        const firebaseService = new FirebaseService();
+    </script>
+
+    <!-- الكود الرئيسي -->
+    <script>
+        // كود JavaScript للإدارة
+        document.addEventListener('DOMContentLoaded', function() {
+            const productForm = document.getElementById('productForm');
+            const productsList = document.getElementById('productsList');
+@@ -308,15 +407,16 @@ <h3>${product.name}</h3>
+                ordersList.innerHTML = '';
+
+                orders.forEach(order => {
+                    const orderDate = order.createdAt ? new Date(order.createdAt).toLocaleString('ar-EG') : 'غير محدد';
+                    const orderItem = document.createElement('div');
+                    orderItem.className = 'order-item';
+                    orderItem.innerHTML = `
+                        <h3>👤 ${order.customerName}</h3>
+                        <p>📞 ${order.phone}</p>
+                        <p>📍 ${order.address}</p>
+                        <p>📦 ${order.products}</p>
+                        <h3>👤 ${order.customerName || 'غير محدد'}</h3>
+                        <p>📞 ${order.phone || 'غير محدد'}</p>
+                        <p>📍 ${order.address || 'غير محدد'}</p>
+                        <p>📦 ${order.products || 'غير محدد'}</p>
+                        <p class="status-${order.status}">🔄 الحالة: ${order.status === 'pending' ? 'قيد الانتظار' : 'مكتمل'}</p>
+                        <p>📅 ${new Date(order.createdAt).toLocaleString('ar-EG')}</p>
+                        <p>📅 ${orderDate}</p>
+                        <div class="order-actions">
+                            ${order.status === 'pending' ? 
+                                `<button class="btn-complete" onclick="updateOrderStatus('${order.id}', 'completed')">✅ تم التوصيل</button>` : 
+@@ -371,3 +471,4 @@ <h3>👤 ${order.customerName}</h3>
+    </script>
+</body>
+</html>
