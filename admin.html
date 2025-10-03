@@ -5,6 +5,68 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>لوحة الإدارة - BENAKRAB Shopping</title>
   <link rel="stylesheet" href="style.css"/>
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #4a90e2;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    h1 { margin: 0; }
+    main { padding: 2rem; }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .orders-table th, .orders-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+    .orders-table thead {
+      background: #f0f4f8;
+    }
+    .orders-table tr:hover {
+      background: #f9fbfd;
+    }
+
+    .status-pending {
+      color: #ff9800;
+      font-weight: bold;
+    }
+    .status-completed {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    button {
+      border: none;
+      padding: 6px 12px;
+      margin: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+
+    .btn-deliver { background: #4caf50; color: white; }
+    .btn-pending { background: #ff9800; color: white; }
+    .btn-delete { background: #f44336; color: white; }
+  </style>
 </head>
 <body>
   <header>
@@ -33,11 +95,11 @@
     </section>
   </main>
 
-  <footer>
+  <footer style="text-align:center; padding:1rem; background:#eee; margin-top:2rem;">
     <p>© 2025 BENAKRAB Shopping - جميع الحقوق محفوظة</p>
   </footer>
 
-  <!-- Firebase + الخدمات -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="js/firebase.js"></script>
@@ -45,7 +107,6 @@
   <script>
     const ordersBody = document.getElementById("ordersBody");
 
-    // تحميل الطلبات من Firebase
     async function loadOrders() {
       ordersBody.innerHTML = "<tr><td colspan='7'>⏳ جاري تحميل الطلبات...</td></tr>";
       const orders = await window.firebaseService.getDeliveryOrders();
@@ -70,35 +131,32 @@
                 : ""
             }
           </td>
-          <td>${order.status === "completed" ? "✅ تم التوصيل" : "⏳ قيد الانتظار"}</td>
+          <td class="status-${order.status}">
+            ${order.status === "completed" ? "✅ تم التوصيل" : "⏳ قيد الانتظار"}
+          </td>
           <td>
             ${
               order.status === "pending"
-                ? `<button onclick="markDelivered('${order.id}')">✅ تم التوصيل</button>`
-                : `<button onclick="markPending('${order.id}')">↩️ إرجاع للانتظار</button>`
+                ? `<button class="btn-deliver" onclick="markDelivered('${order.id}')">✅ تم التوصيل</button>`
+                : `<button class="btn-pending" onclick="markPending('${order.id}')">↩️ إرجاع للانتظار</button>`
             }
-            <button onclick="deleteOrder('${order.id}')">🗑️ حذف</button>
+            <button class="btn-delete" onclick="deleteOrder('${order.id}')">🗑️ حذف</button>
           </td>
         `;
         ordersBody.appendChild(row);
       });
     }
 
-    // تغيير الحالة إلى "تم التوصيل"
     async function markDelivered(orderId) {
       const res = await window.firebaseService.updateOrderStatus(orderId, "completed");
       if (res.success) loadOrders();
       else alert("❌ خطأ في تحديث الحالة");
     }
-
-    // إرجاع الطلبية إلى الانتظار
     async function markPending(orderId) {
       const res = await window.firebaseService.updateOrderStatus(orderId, "pending");
       if (res.success) loadOrders();
       else alert("❌ خطأ في تحديث الحالة");
     }
-
-    // حذف الطلب
     async function deleteOrder(orderId) {
       if (!confirm("هل تريد حذف هذا الطلب؟")) return;
       const res = await window.firebaseService.deleteOrder(orderId);
@@ -106,7 +164,6 @@
       else alert("❌ خطأ في حذف الطلب");
     }
 
-    // تحميل أولي
     document.addEventListener("DOMContentLoaded", loadOrders);
   </script>
 </body>
