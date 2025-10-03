@@ -15,9 +15,34 @@
   <link rel="stylesheet" href="css/style.css">
 
   <!-- Firebase SDK (compat for Realtime DB used here) -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js" defer></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js" defer></script>
+ 
+  <!-- احذف كل سكريبتات Firebase الموجودة وأستبدلها بهذا: -->
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
+<script>
+  // التهيئة - استخدم بياناتك الحقيقية
+  const firebaseConfig = {
+    apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
+    authDomain: "benakrab43.firebaseapp.com",
+    databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
+    projectId: "benakrab43",
+    storageBucket: "benakrab43.appspot.com",
+    messagingSenderId: "751387344597",
+    appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
+  };
+
+  // Initialize Firebase
+  firebase.initializeApp(firebaseConfig);
+  console.log('✅ Firebase جاهز!');
+</script>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+
+
+
+  
   <!-- Your Firebase config will be initialized in firebase.js (loaded later) -->
 </head>
 <body>
