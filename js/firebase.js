@@ -121,14 +121,5 @@
   }
 
   // expose instance globally
-  window.firebaseService = {
-  // دالة جلب الطلبات
-  async getDeliveryOrders() {
-    const snapshot = await this.database.ref('deliveryOrders').once('value');
-    const orders = [];
-    snapshot.forEach(child => {
-      orders.push({ id: child.key, ...child.val() });
-    });
-    return orders;
-  },
-
+  window.firebaseService = new FirebaseService();
+})();
