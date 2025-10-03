@@ -1,3 +1,6 @@
+// js/data.js
+// بيانات افتراضية ومدير بيانات بسيط (يتوقع وجود firebase SDK قبل هذا الملف)
+
 // بيانات افتراضية للطوارئ
 const defaultProducts = {
   "products": [
@@ -72,34 +75,41 @@ function getSizeDetails(size) {
   return sizeChart.find(item => item.size === size) || {};
 }
 
-// كلاس للتعامل مع Firebase
+// FirebaseDataManager (بسيط)
 class FirebaseDataManager {
   constructor() {
+    if (typeof firebase === 'undefined') {
+      console.warn('Firebase SDK غير معرفة — سيتم استعمال البيانات الافتراضية.');
+      this.database = null;
+      this.productsRef = null;
+      this.ordersRef = null;
+      return;
+    }
     this.database = firebase.database();
     this.productsRef = this.database.ref('products');
     this.ordersRef = this.database.ref('orders');
   }
 
-  // الحصول على جميع المنتجات
   async getProducts() {
+    if (!this.productsRef) {
+      // لا Firebase — استخدم الافتراضي
+      return defaultProducts.products;
+    }
     try {
       const snapshot = await this.productsRef.once('value');
       const products = snapshot.val();
-      if (products) {
-        return Object.keys(products).map(key => ({
-          id: key,
-          ...products[key]
-        }));
-      }
-      return [];
+      return products ? Object.keys(products).map(key => ({ id: key, ...products[key] })) : [];
     } catch (error) {
       console.error('Error getting products:', error);
-      return [];
+      return defaultProducts.products;
     }
   }
 
-  // إضافة طلب جديد
   async addOrder(order) {
+    if (!this.ordersRef) {
+      console.warn('Firebase غير متاحة — addOrder لن يرسل إلى DB.');
+      return { success: false, error: 'Firebase غير مهيأ' };
+    }
     try {
       const newOrderRef = this.ordersRef.push();
       await newOrderRef.set({
@@ -117,5 +127,5 @@ class FirebaseDataManager {
   }
 }
 
-// إنشاء instance عام
+// instance جاهز
 const dataManager = new FirebaseDataManager();
