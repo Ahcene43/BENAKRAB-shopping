@@ -1,4 +1,7 @@
 
+
+// إنشاء instance عام
+const dataManager = new FirebaseDataManager();
 // بيانات افتراضية للطوارئ
 const defaultProducts = {
   "products": [
@@ -71,4 +74,49 @@ function getSize(age) {
 function getSizeDetails(size) {
   const sizeChart = defaultProducts.sizeChart;
   return sizeChart.find(item => item.size === size) || {};
+}
+
+// js/data.js
+class FirebaseDataManager {
+    constructor() {
+        this.database = firebase.database();
+        this.productsRef = this.database.ref('products');
+        this.ordersRef = this.database.ref('orders');
+    }
+
+    // الحصول على جميع المنتجات
+    async getProducts() {
+        try {
+            const snapshot = await this.productsRef.once('value');
+            const products = snapshot.val();
+            if (products) {
+                return Object.keys(products).map(key => ({
+                    id: key,
+                    ...products[key]
+                }));
+            }
+            return [];
+        } catch (error) {
+            console.error('Error getting products:', error);
+            return [];
+        }
+    }
+
+    // إضافة طلب جديد
+    async addOrder(order) {
+        try {
+            const newOrderRef = this.ordersRef.push();
+            await newOrderRef.set({
+                ...order,
+                id: newOrderRef.key,
+                status: 'pending',
+                createdAt: firebase.database.ServerValue.TIMESTAMP,
+                date: new Date().toLocaleString('ar-EG')
+            });
+            return { success: true, id: newOrderRef.key };
+        } catch (error) {
+            console.error('Error adding order:', error);
+            return { success: false, error: error.message };
+        }
+    }
 }
