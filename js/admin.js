@@ -1,506 +1,161 @@
-class AdminPanel {
-    constructor() {
-        this.products = [];
-        this.deliveryPrices = {};
-        this.colors = [];
-        this.sizeChart = [];
-        this.currentTab = 'products';
-        this.init();
+// admin.js
+// UI logic for the admin/orders page.
+// Assumes a global `firebaseService` instance exists (see js/firebase.js).
+// This file avoids innerHTML for safety and uses event listeners.
+
+(function () {
+  'use strict';
+
+  // DOM container
+  const ordersListEl = document.getElementById('ordersList');
+  if (!ordersListEl) {
+    console.error('admin.js: #ordersList element not found.');
+    return;
+  }
+
+  // Ensure firebaseService is available
+  if (!window.firebaseService || typeof window.firebaseService.getDeliveryOrders !== 'function') {
+    console.error('admin.js: window.firebaseService not found. Make sure js/firebase.js is loaded before admin.js');
+    // show friendly message in UI
+    ordersListEl.textContent = 'خطأ: لم يتم تهيئة الخدمة. تواصل مع المطور.';
+    return;
+  }
+
+  // Utility: create a <p> with an emoji prefix and text
+  function createInfoParagraph(prefix, text) {
+    const p = document.createElement('p');
+    p.textContent = `${prefix} ${text}`;
+    return p;
+  }
+
+  // Create DOM element for a single order
+  function createOrderElement(order) {
+    const container = document.createElement('div');
+    container.className = 'order-item';
+
+    // Safe fallbacks
+    const customerName = order.customerName || 'غير محدد';
+    const phone = order.phone || 'غير محدد';
+    const address = order.address || 'غير محدد';
+    const products = order.products || 'غير محدد';
+    const status = order.status || 'pending';
+    const dateText = order.createdAt ? new Date(order.createdAt).toLocaleString('ar-EG') : 'غير محدد';
+
+    // Header
+    const h3 = document.createElement('h3');
+    h3.textContent = `👤 ${customerName}`;
+    container.appendChild(h3);
+
+    // Info lines
+    container.appendChild(createInfoParagraph('📞', phone));
+    container.appendChild(createInfoParagraph('📍', address));
+    container.appendChild(createInfoParagraph('📦', products));
+
+    // Status and date
+    const statusP = document.createElement('p');
+    statusP.className = `status-${status}`;
+    statusP.textContent = `🔄 الحالة: ${status === 'pending' ? 'قيد الانتظار' : 'مكتمل'}`;
+    container.appendChild(statusP);
+
+    container.appendChild(createInfoParagraph('📅', dateText));
+
+    // Actions
+    const actions = document.createElement('div');
+    actions.className = 'order-actions';
+
+    // Complete / revert button depending on current status
+    if (status === 'pending') {
+      const completeBtn = document.createElement('button');
+      completeBtn.type = 'button';
+      completeBtn.textContent = '✅ تم التوصيل';
+      completeBtn.addEventListener('click', async () => {
+        await updateOrderStatus(order.id, 'completed');
+      });
+      actions.appendChild(completeBtn);
+    } else {
+      const revertBtn = document.createElement('button');
+      revertBtn.type = 'button';
+      revertBtn.textContent = '↩️ إعادة إلى قيد الانتظار';
+      revertBtn.addEventListener('click', async () => {
+        await updateOrderStatus(order.id, 'pending');
+      });
+      actions.appendChild(revertBtn);
     }
 
-    async init() {
-        await this.loadData();
-        this.setupTabs();
-        this.renderProducts();
-        this.renderDeliveryPrices();
-        this.renderColors();
-        this.renderSizeOptions();
-        this.renderColorOptions();
-        this.setupEvents();
-    }
-
-    async loadData() {
-        try {
-            const [productsRes, deliveryRes] = await Promise.all([
-                fetch('data/products.json'),
-                fetch('data/delivery.json')
-            ]);
-            
-            const productsData = await productsRes.json();
-            this.products = productsData.products || [];
-            this.colors = productsData.colors || [];
-            this.sizeChart = productsData.sizeChart || [];
-            
-            const deliveryData = await deliveryRes.json();
-            this.deliveryPrices = deliveryData.deliveryPrices || {};
-        } catch (error) {
-            console.error('Error loading data:', error);
-            this.loadDefaultData();
-        }
-    }
-
-    loadDefaultData() {
-        this.products = defaultProducts.products || [];
-        this.colors = defaultProducts.colors || [];
-        this.sizeChart = defaultProducts.sizeChart || [];
-        this.deliveryPrices = defaultDeliveryPrices.deliveryPrices || {};
-    }
-
-    setupTabs() {
-        const tabBtns = document.querySelectorAll('.tab-btn');
-        const tabContents = document.querySelectorAll('.tab-content');
-
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabName = btn.getAttribute('data-tab');
-                
-                // تحديث الأزرار
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                // تحديث المحتوى
-                tabContents.forEach(content => content.classList.remove('active'));
-                document.getElementById(tabName).classList.add('active');
-                
-                this.currentTab = tabName;
-            });
-        });
-    }
-
-    setupEvents() {
-        // أحداث المنتجات
-        document.getElementById('productForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveProduct();
-        });
-
-        // أحداث أسعار التوصيل
-        document.getElementById('deliveryForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveDeliveryPrice();
-        });
-
-        // أحداث الألوان
-        document.getElementById('colorForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.saveColor();
-        });
-    }
-
-    // إدارة المنتجات
-    saveProduct() {
-        const productId = document.getElementById('productId').value;
-        const selectedColors = this.getSelectedColors();
-        const selectedSizes = this.getSelectedSizes();
-
-        const product = {
-            id: productId || Date.now(),
-            name: document.getElementById('productName').value,
-            image: document.getElementById('productImage').value,
-            price: parseInt(document.getElementById('productPrice').value),
-            description: document.getElementById('productDescription').value,
-            active: document.getElementById('productActive').checked,
-            colors: selectedColors,
-            sizes: selectedSizes
-        };
-
-        if (!productId) {
-            // منتج جديد
-            this.products.push(product);
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.type = 'button';
+    deleteBtn.textContent = '🗑️ حذف الطلب';
+    deleteBtn.addEventListener('click', async () => {
+      const ok = confirm('هل تريد حقًا حذف هذا الطلب؟');
+      if (!ok) return;
+      try {
+        const res = await window.firebaseService.deleteOrder(order.id);
+        if (res && res.success) {
+          await loadDeliveryOrders();
         } else {
-            // تعديل منتج موجود
-            const index = this.products.findIndex(p => p.id == productId);
-            if (index !== -1) {
-                this.products[index] = product;
-            }
+          alert('حدث خطأ أثناء حذف الطلب: ' + (res && res.error ? res.error : 'Unknown'));
         }
-
-        this.saveAllData();
-        this.renderProducts();
-        this.resetProductForm();
-        this.showAlert('تم حفظ المنتج بنجاح', 'success', 'productAlert');
-    }
-
-    getSelectedColors() {
-        const selected = [];
-        const colorCheckboxes = document.querySelectorAll('#productColors input[type="checkbox"]:checked');
-        colorCheckboxes.forEach(checkbox => {
-            selected.push(checkbox.value);
-        });
-        return selected;
-    }
-
-    getSelectedSizes() {
-        const selected = [];
-        const sizeCheckboxes = document.querySelectorAll('#productSizes input[type="checkbox"]');
-        sizeCheckboxes.forEach(checkbox => {
-            selected.push({
-                size: checkbox.value,
-                age: checkbox.getAttribute('data-age'),
-                available: checkbox.checked
-            });
-        });
-        return selected;
-    }
-
-    editProduct(id) {
-        const product = this.products.find(p => p.id == id);
-        if (product) {
-            document.getElementById('productId').value = product.id;
-            document.getElementById('productName').value = product.name;
-            document.getElementById('productImage').value = product.image;
-            document.getElementById('productPrice').value = product.price;
-            document.getElementById('productDescription').value = product.description;
-            document.getElementById('productActive').checked = product.active;
-
-            // تحديد الألوان
-            const colorCheckboxes = document.querySelectorAll('#productColors input[type="checkbox"]');
-            colorCheckboxes.forEach(checkbox => {
-                checkbox.checked = product.colors.includes(checkbox.value);
-            });
-
-            // تحديد المقاسات
-            const sizeCheckboxes = document.querySelectorAll('#productSizes input[type="checkbox"]');
-            sizeCheckboxes.forEach(checkbox => {
-                const sizeInfo = product.sizes.find(s => s.size === checkbox.value);
-                checkbox.checked = sizeInfo ? sizeInfo.available : false;
-            });
-
-            // التمرير للأعلى
-            document.getElementById('products').scrollIntoView({ behavior: 'smooth' });
-        }
-    }
-
-    deleteProduct(id) {
-        if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-            this.products = this.products.filter(p => p.id != id);
-            this.saveAllData();
-            this.renderProducts();
-            this.showAlert('تم حذف المنتج بنجاح', 'success', 'productAlert');
-        }
-    }
-
-    resetProductForm() {
-        document.getElementById('productForm').reset();
-        document.getElementById('productId').value = '';
-    }
-
-    // إدارة أسعار التوصيل
-    saveDeliveryPrice() {
-        const wilaya = document.getElementById('wilayaName').value;
-        const homePrice = parseInt(document.getElementById('homePrice').value);
-        const deskPrice = parseInt(document.getElementById('deskPrice').value);
-
-        this.deliveryPrices[wilaya] = {
-            home: homePrice,
-            desk: deskPrice
-        };
-
-        this.saveAllData();
-        this.renderDeliveryPrices();
-        this.resetDeliveryForm();
-        this.showAlert('تم حفظ سعر التوصيل بنجاح', 'success', 'deliveryAlert');
-    }
-
-    editDeliveryPrice(wilaya) {
-        const prices = this.deliveryPrices[wilaya];
-        if (prices) {
-            document.getElementById('wilayaName').value = wilaya;
-            document.getElementById('homePrice').value = prices.home;
-            document.getElementById('deskPrice').value = prices.desk;
-        }
-    }
-
-    deleteDeliveryPrice(wilaya) {
-        if (confirm('هل أنت متأكد من حذف سعر التوصيل لهذه الولاية؟')) {
-            delete this.deliveryPrices[wilaya];
-            this.saveAllData();
-            this.renderDeliveryPrices();
-            this.showAlert('تم حذف سعر التوصيل بنجاح', 'success', 'deliveryAlert');
-        }
-    }
-
-    resetDeliveryForm() {
-        document.getElementById('deliveryForm').reset();
-    }
-
-    // إدارة الألوان
-    saveColor() {
-        const colorName = document.getElementById('colorName').value;
-        const colorValue = document.getElementById('colorValue').value;
-
-        // التحقق من عدم تكرار اللون
-        const existingColor = this.colors.find(c => c.name === colorName);
-        if (existingColor) {
-            this.showAlert('هذا اللون موجود مسبقاً', 'error', 'colorsAlert');
-            return;
-        }
-
-        this.colors.push({
-            name: colorName,
-            value: colorValue
-        });
-
-        this.saveAllData();
-        this.renderColors();
-        this.renderColorOptions();
-        this.resetColorForm();
-        this.showAlert('تم إضافة اللون بنجاح', 'success', 'colorsAlert');
-    }
-
-    deleteColor(colorName) {
-        if (confirm('هل أنت متأكد من حذف هذا اللون؟')) {
-            this.colors = this.colors.filter(c => c.name !== colorName);
-            this.saveAllData();
-            this.renderColors();
-            this.renderColorOptions();
-            this.showAlert('تم حذف اللون بنجاح', 'success', 'colorsAlert');
-        }
-    }
-
-    resetColorForm() {
-        document.getElementById('colorForm').reset();
-    }
-
-    // التصيير
-    renderProducts() {
-        const container = document.getElementById('productsList');
-        container.innerHTML = this.products.map(product => `
-            <div class="item-card">
-                <div class="item-header">
-                    <h3>${product.name} - ${product.price} دج</h3>
-                    <div class="item-actions">
-                        <button class="btn btn-primary btn-sm" onclick="admin.editProduct(${product.id})">تعديل</button>
-                        <button class="btn btn-secondary btn-sm" onclick="admin.deleteProduct(${product.id})">حذف</button>
-                    </div>
-                </div>
-                <p><strong>الصورة:</strong> ${product.image}</p>
-                <p><strong>الوصف:</strong> ${product.description}</p>
-                <p><strong>الحالة:</strong> ${product.active ? 'نشط' : 'غير نشط'}</p>
-                <p><strong>الألوان:</strong> ${product.colors.join(', ')}</p>
-                <p><strong>المقاسات المتاحة:</strong> 
-                    ${product.sizes.filter(s => s.available).map(s => s.size).join(', ')}
-                </p>
-            </div>
-        `).join('');
-    }
-
-    renderDeliveryPrices() {
-        const container = document.getElementById('deliveryList');
-        container.innerHTML = Object.entries(this.deliveryPrices).map(([wilaya, prices]) => `
-            <div class="item-card">
-                <div class="item-header">
-                    <h3>${wilaya}</h3>
-                    <div class="item-actions">
-                        <button class="btn btn-primary btn-sm" onclick="admin.editDeliveryPrice('${wilaya}')">تعديل</button>
-                        <button class="btn btn-secondary btn-sm" onclick="admin.deleteDeliveryPrice('${wilaya}')">حذف</button>
-                    </div>
-                </div>
-                <p><strong>التوصيل للمنزل:</strong> ${prices.home} دج</p>
-                <p><strong>التوصيل للمكتب:</strong> ${prices.desk} دج</p>
-            </div>
-        `).join('');
-    }
-
-    renderColors() {
-        const container = document.getElementById('colorsList');
-        container.innerHTML = this.colors.map(color => `
-            <div class="item-card">
-                <div class="item-header">
-                    <h3>
-                        <span class="color-preview" style="background-color: ${color.value}"></span>
-                        ${color.name}
-                    </h3>
-                    <div class="item-actions">
-                        <button class="btn btn-secondary btn-sm" onclick="admin.deleteColor('${color.name}')">حذف</button>
-                    </div>
-                </div>
-                <p><strong>كود اللون:</strong> ${color.value}</p>
-            </div>
-        `).join('');
-    }
-
-    renderColorOptions() {
-        const container = document.getElementById('productColors');
-        container.innerHTML = this.colors.map(color => `
-            <label style="display: inline-block; margin: 0.5rem;">
-                <span class="color-preview" style="background-color: ${color.value}"></span>
-                <input type="checkbox" value="${color.name}" style="margin-right: 0.5rem;">
-                ${color.name}
-            </label>
-        `).join('');
-    }
-
-    renderSizeOptions() {
-        const container = document.getElementById('productSizes');
-        container.innerHTML = this.sizeChart.map(size => `
-            <label style="display: inline-block; margin: 0.5rem;">
-                <input type="checkbox" value="${size.size}" data-age="${size.age}" style="margin-right: 0.5rem;">
-                ${size.size} (${size.age})
-            </label>
-        `).join('');
-    }
-
-    // الحفظ
-    async saveAllData() {
-        const productsData = {
-            products: this.products,
-            colors: this.colors,
-            sizeChart: this.sizeChart
-        };
-
-        const deliveryData = {
-            deliveryPrices: this.deliveryPrices
-        };
-
-        await this.saveToFile('data/products.json', productsData);
-        await this.saveToFile('data/delivery.json', deliveryData);
-    }
-
-    async saveToFile(filename, data) {
-        // في بيئة حقيقية، هنا نرسل البيانات للسيرفر
-        // للتبسيط، سنستخدم localStorage للتخزين المؤقت
-        localStorage.setItem(filename, JSON.stringify(data, null, 2));
-        console.log('تم الحفظ في:', filename);
-        
-        // يمكنك إضافة كود لإرسال البيانات للسيرفر هنا
-        try {
-            // مثال باستخدام Fetch API لإرسال البيانات للسيرفر
-            // await fetch('/api/save-data', {
-            //     method: 'POST',
-            //     headers: { 'Content-Type': 'application/json' },
-            //     body: JSON.stringify({ filename, data })
-            // });
-        } catch (error) {
-            console.error('Error saving to server:', error);
-        }
-    }
-
-    // التنبيهات
-    showAlert(message, type, containerId) {
-        const container = document.getElementById(containerId);
-        const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
-        
-        container.innerHTML = `
-            <div class="alert ${alertClass}">
-                ${message}
-            </div>
-        `;
-        
-        setTimeout(() => {
-            container.innerHTML = '';
-        }, 3000);
-    }
-}
-
-// تهيئة لوحة التحكم
-const admin = new AdminPanel();
-
-
-
-
-// js/admin.js - النسخة المحدثة مع Firebase
-document.addEventListener('DOMContentLoaded', function() {
-    const productForm = document.getElementById('productForm');
-    const productsList = document.getElementById('productsList');
-    const ordersList = document.getElementById('ordersList');
-
-    // تحميل المنتجات عند فتح الصفحة
-    loadProducts();
-    loadOrders();
-
-    // إضافة منتج جديد
-    productForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        
-        const productData = {
-            name: document.getElementById('productName').value,
-            price: document.getElementById('productPrice').value,
-            image: document.getElementById('productImage').value,
-            category: document.getElementById('productCategory').value,
-            description: document.getElementById('productDescription').value
-        };
-
-        const result = await firebaseService.addProduct(productData);
-        if (result.success) {
-            alert('تم إضافة المنتج بنجاح!');
-            productForm.reset();
-            loadProducts(); // إعادة تحميل القائمة
-        } else {
-            alert('خطأ في إضافة المنتج: ' + result.error);
-        }
+      } catch (err) {
+        console.error('deleteOrder error', err);
+        alert('حدث خطأ غير متوقع أثناء حذف الطلب.');
+      }
     });
+    actions.appendChild(deleteBtn);
 
-    // تحميل وعرض المنتجات
-    async function loadProducts() {
-        const products = await firebaseService.getProducts();
-        displayProducts(products);
+    container.appendChild(actions);
+
+    return container;
+  }
+
+  // Render the orders list
+  function renderOrders(orders) {
+    // Clear list
+    ordersListEl.innerHTML = '';
+    if (!Array.isArray(orders) || orders.length === 0) {
+      ordersListEl.textContent = 'لا توجد طلبات.';
+      return;
     }
 
-    function displayProducts(products) {
-        productsList.innerHTML = '';
-        
-        products.forEach(product => {
-            const productItem = document.createElement('div');
-            productItem.className = 'product-item';
-            productItem.innerHTML = `
-                <img src="${product.image}" alt="${product.name}">
-                <h3>${product.name}</h3>
-                <p>${product.price}</p>
-                <p>${product.category}</p>
-                <button onclick="editProduct('${product.id}')">تعديل</button>
-                <button onclick="deleteProduct('${product.id}')">حذف</button>
-            `;
-            productsList.appendChild(productItem);
-        });
-    }
+    const frag = document.createDocumentFragment();
+    orders.forEach(order => {
+      const el = createOrderElement(order);
+      frag.appendChild(el);
+    });
+    ordersListEl.appendChild(frag);
+  }
 
-    // تحميل وعرض طلبات التوصيل
-    async function loadOrders() {
-        const orders = await firebaseService.getDeliveryOrders();
-        displayOrders(orders);
+  // Load orders from Firebase service and render
+  async function loadDeliveryOrders() {
+    try {
+      ordersListEl.textContent = 'جاري التحميل...';
+      const orders = await window.firebaseService.getDeliveryOrders();
+      renderOrders(orders);
+    } catch (err) {
+      console.error('loadDeliveryOrders error', err);
+      ordersListEl.textContent = 'حدث خطأ أثناء تحميل الطلبات.';
     }
+  }
 
-    function displayOrders(orders) {
-        ordersList.innerHTML = '';
-        
-        orders.forEach(order => {
-            const orderItem = document.createElement('div');
-            orderItem.className = 'order-item';
-            orderItem.innerHTML = `
-                <h3>طلب من: ${order.customerName}</h3>
-                <p>الهاتف: ${order.phone}</p>
-                <p>العنوان: ${order.address}</p>
-                <p>المنتجات: ${order.products}</p>
-                <p>الحالة: ${order.status}</p>
-                <button onclick="updateOrderStatus('${order.id}', 'completed')">تم التوصيل</button>
-            `;
-            ordersList.appendChild(orderItem);
-        });
+  // Update order status then refresh list
+  async function updateOrderStatus(orderId, status) {
+    try {
+      const res = await window.firebaseService.updateOrderStatus(orderId, status);
+      if (res && res.success) {
+        await loadDeliveryOrders();
+      } else {
+        alert('خطأ عند تحديث حالة الطلب: ' + (res && res.error ? res.error : 'Unknown'));
+      }
+    } catch (err) {
+      console.error('updateOrderStatus error', err);
+      alert('حدث خطأ غير متوقع أثناء تحديث الحالة.');
     }
-});
+  }
 
-// دوال عامة للتعديل والحذف
-async function deleteProduct(productId) {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-        const result = await firebaseService.deleteProduct(productId);
-        if (result.success) {
-            alert('تم حذف المنتج بنجاح');
-            location.reload();
-        } else {
-            alert('خطأ في حذف المنتج');
-        }
-    }
-}
+  // Expose function for debugging or inline use if needed
+  window.adminLoadDeliveryOrders = loadDeliveryOrders;
+  window.adminUpdateOrderStatus = updateOrderStatus;
 
-async function updateOrderStatus(orderId, status) {
-    const result = await firebaseService.updateOrderStatus(orderId, status);
-    if (result.success) {
-        alert('تم تحديث حالة الطلب');
-        location.reload();
-    }
-}  
-       
-
- 
-            
+  // Initial load when DOM is ready
+  document.addEventListener('DOMContentLoaded', loadDeliveryOrders);
+})();
