@@ -9,6 +9,10 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="css/style.css">
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 </head>
 <body>
   <header id="mainHeader">
@@ -278,31 +282,25 @@
     </div>
   </div>
 
+  <!-- تهيئة Firebase -->
+  <script>
+    // استبدل هذه القيم ببيانات مشروعك من Firebase Console
+    const firebaseConfig = {
+      apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
+      authDomain: "benakrab43.firebaseapp.com",
+      databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
+      projectId: "benakrab43",
+      storageBucket: "benakrab43.appspot.com",
+      messagingSenderId: "751387344597",
+      appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
+    };
+
+    // تهيئة Firebase
+    firebase.initializeApp(firebaseConfig);
+  </script>
+
+  <!-- السكريبتات -->
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
-<script type="module">
-  // Import the functions you need from the SDKs you need
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-app.js";
-  import { getAnalytics } from "https://www.gstatic.com/firebasejs/12.3.0/firebase-analytics.js";
-  // TODO: Add SDKs for Firebase products that you want to use
-  // https://firebase.google.com/docs/web/setup#available-libraries
-
-  // Your web app's Firebase configuration
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-    apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
-    authDomain: "benakrab43.firebaseapp.com",
-    projectId: "benakrab43",
-    storageBucket: "benakrab43.firebasestorage.app",
-    messagingSenderId: "751387344597",
-    appId: "1:751387344597:web:0bd5328ef337ee852b2c5c",
-    measurementId: "G-FBNWMDHX0B"
-  };
-
-  // Initialize Firebase
-  const app = initializeApp(firebaseConfig);
-  const analytics = getAnalytics(app);
-</script>
-  
 </body>
 </html>
