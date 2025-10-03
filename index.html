@@ -1,306 +1,220 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>👕 مود كيدز - أزياء الأطفال الفاخرة</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <link rel="stylesheet" href="css/style.css">
-  
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
+  <meta charset="utf-8" />
+  <title>لوحة الإدارة</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    /* Styles minimaux pour démonstration */
+    body { font-family: Arial, sans-serif; margin: 16px; }
+    .order-item { border: 1px solid #ddd; padding: 8px; margin-bottom: 8px; }
+    .order-actions button { margin-left: 8px; }
+    .status-pending { color: orange; }
+    .status-completed { color: green; }
+  </style>
 </head>
 <body>
-  <header id="mainHeader">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo-section">
-          <a href="#orderForm" class="logo">
-            <div class="logo-icon">
-              <i class="fas fa-tshirt"></i>
-            </div>
-            <div class="logo-text">
-              <span class="logo-main">مود كيدز</span>
-              <span class="logo-tagline">أزياء الأطفال الفاخرة</span>
-            </div>
-          </a>
-        </div>
-        <a href="#orderForm" class="cart-summary" id="cartSummary">
-          <div class="cart-icon">
-            <i class="fas fa-shopping-bag"></i>
-            <span class="cart-badge" id="cartBadge">0</span>
-          </div>
-          <span id="cartItemsCount">0 عناصر</span>
-          <span>|</span>
-          <span id="cartTotalPrice">0 دج</span>
-        </a>
-      </div>
-    </div>
-  </header>
+  <h2>🚚 طلبات التوصيل</h2>
+  <div id="ordersList">جاري التحميل...</div>
 
-  <!-- قسم الهيرو الجذاب -->
-  <section class="hero">
-    <div class="hero-content">
-      <h1>أزياء الأطفال التي تستحق الابتسامة</h1>
-      <p>جودة فائقة، تصميمات مبتكرة، وراحة لا مثيل لها لصغيرك. اكتشف تشكيلتنا الحصرية بأسعار تنافسية.</p>
-      <a href="#orderForm" class="cta-button">
-        <i class="fas fa-gift"></i>
-        ابدأ التسوق الآن
-      </a>
-    </div>
-  </section>
+  <!-- Firebase compat SDKs: utiliser la version "compat" si vous employez l'API firebase.database() -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
 
-  <div class="container">
-    <!-- سلايدر المنتجات المصحح -->
-    <section class="slider-section">
-      <h2 class="section-title">أحدث تشكيلاتنا للأطفال</h2>
-      <div class="slideshow-container">
-        <button class="slider-arrow prev" id="prevSlide">❮</button>
-        <div class="slides-container" id="slidesContainer">
-          <!-- سيتم ملؤها ديناميكياً من JavaScript -->
-        </div>
-        <button class="slider-arrow next" id="nextSlide">❯</button>
-      </div>
-      <div class="slider-nav" id="sliderNav">
-        <!-- سيتم ملؤها ديناميكياً من JavaScript -->
-      </div>
-    </section>
-
-    <!-- شريط التقدم -->
-    <section class="progress-section">
-      <div class="progress-bar">
-        <div class="progress-step active" data-step="1">
-          <div class="step-icon">1</div>
-          <div class="step-label">اختر المنتجات</div>
-        </div>
-        <div class="progress-step" data-step="2">
-          <div class="step-icon">2</div>
-          <div class="step-label">المعلومات الشخصية</div>
-        </div>
-        <div class="progress-step" data-step="3">
-          <div class="step-icon">3</div>
-          <div class="step-label">تأكيد الطلب</div>
-        </div>
-      </div>
-    </section>
-
-    <!-- نموذج الطلب -->
-    <form id="orderForm">
-      <!-- الخطوة 1: اختيار المنتجات -->
-      <section class="form-section" id="step1">
-        <h2 class="form-title"><i class="fas fa-shopping-cart"></i> اختر منتجاتك</h2>
-        
-        <div class="pieces-container" id="piecesContainer">
-          <!-- سيتم إضافة القطع ديناميكياً هنا -->
-        </div>
-        
-        <div class="form-group">
-          <label for="daire">___________________________</label>
-        </div>
-          
-        <button type="button" id="addPieceBtn" class="btn btn-secondary btn-full">
-          <i class="fas fa-plus"></i> أضف إلى السلة 
-        </button>
-        
-        <div class="form-group">
-          <label for="daire">___________________________</label>
-          
-          <label for="wilaya"><i class="fas fa-map-marker-alt"></i>  اختر الولاية لمعرفة سعر التوصيل</label>
-          
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
-            <select id="wilaya" name="wilaya" required>
-              <option value="">--   اختر الولاية --</option>
-            </select>
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="deliveryType"><i class="fas fa-truck"></i> نوع التوصيل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-truck"></i></span>
-            <select id="deliveryType" name="deliveryType">
-              <option value="home">التوصيل إلى باب المنزل</option>
-              <option value="desk">التوصيل الى المكتب</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- عرض السعر -->
-        <div class="price-box">
-          <div class="price-header">
-            <i class="fas fa-receipt"></i>
-            <h3 class="price-title">تفاصيل الطلب</h3>
-          </div>
-          <div class="price-item">
-            <span>سعر القطعة:</span>
-            <span id="unitPrice">0 دج</span>
-          </div>
-          <div class="price-item">
-            <span>عدد القطع:</span>
-            <span id="piecesCount">0</span>
-          </div>
-          <div class="price-item">
-            <span>المجموع الجزئي:</span>
-            <span id="subtotal">0 دج</span>
-          </div>
-          <div class="price-item">
-            <span>تكلفة التوصيل:</span>
-            <span id="deliveryCost">0 دج</span>
-          </div>
-          <div class="price-total">
-            <span>المجموع الكلي:</span>
-            <span id="totalPrice">0 دج</span>
-          </div>
-          <div class="price-item" id="discountInfo" style="display: none;">
-            <span>خصم الكمية:</span>
-            <span id="discountAmount">-300 دج</span>
-          </div>
-        </div>
-        
-        <div class="btn-group">
-          <button type="button" id="nextToStep2" class="btn btn-primary">
-            التالي <i class="fas fa-arrow-left"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- الخطوة 2: المعلومات الشخصية -->
-      <section class="form-section personal-section" id="step2">
-        <h2 class="form-title"><i class="fas fa-user"></i> معلومات الاتصال</h2>
-        
-        <div class="form-group">
-          <label for="name">الاسم الكامل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-user"></i></span>
-            <input type="text" id="name" name="name" required autocomplete="name">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="phone">رقم الهاتف</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-phone"></i></span>
-            <input type="tel" id="phone" name="phone" pattern="^[0-9]{10}$" maxlength="10" required autocomplete="tel" placeholder="أدخل رقم الهاتف">
-          </div>
-          <small style="color: var(--gray); display: block; margin-top: 0.25rem;">يجب أن يتكون من 10 أرقام</small>
-        </div>
-        
-        <div class="form-group">
-          <label for="daire">الدائرة</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-map"></i></span>
-            <input type="text" id="daire" name="daire" required autocomplete="address-level3">
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="address">العنوان الكامل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-home"></i></span>
-            <textarea id="address" name="address" rows="3" required autocomplete="street-address"></textarea>
-          </div>
-        </div>
-
-        <!-- زر مسح البيانات المحفوظة -->
-        <div class="form-group" style="text-align: center; margin-top: 1rem;">
-          <button type="button" id="clearSavedData" class="clear-data-btn">
-            <i class="fas fa-trash"></i> مسح البيانات المحفوظة
-          </button>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" id="backToStep1" class="btn btn-secondary">
-            <i class="fas fa-arrow-right"></i> الرجوع
-          </button>
-          <button type="button" id="nextToStep3" class="btn btn-primary">
-            التالي <i class="fas fa-arrow-left"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- الخطوة 3: تأكيد الطلب -->
-      <section class="form-section personal-section" id="step3">
-        <h2 class="form-title"><i class="fas fa-check-circle"></i> تأكيد الطلب</h2>
-        
-        <div class="order-summary">
-          <h3 class="summary-title">ملخص طلبك</h3>
-          <div id="orderSummary">
-            <!-- سيتم ملؤها ديناميكياً -->
-          </div>
-        </div>
-        
-        <div class="form-group">
-          <label for="notes"><i class="fas fa-sticky-note"></i> ملاحظات إضافية (اختياري)</label>
-          <textarea id="notes" name="notes" rows="3" placeholder="أي ملاحظات إضافية حول الطلب..."></textarea>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" id="backToStep2" class="btn btn-secondary">
-            <i class="fas fa-arrow-right"></i> الرجوع
-          </button>
-          <button type="submit" id="submitOrder" class="btn btn-success">
-            <i class="fas fa-check"></i> تأكيد وإرسال الطلب
-          </button>
-        </div>
-      </section>
-
-      <!-- شاشة التحميل المحسنة -->
-      <div class="loading" id="loading">
-        <div class="loading-spinner"></div>
-        <p><i class="fas fa-spinner fa-spin"></i> جاري معالجة طلبك...</p>
-        <p style="color: var(--gray); font-size: 0.9rem; margin-top: 0.5rem;">قد تستغرق العملية بضع ثوانٍ</p>
-      </div>
-    </form>
-  </div>
-
-  <!-- مودال النجاح -->
-  <div class="modal" id="successModal">
-    <div class="modal-content">
-      <!-- زر الإغلاق المضاف -->
-      <button class="modal-close" onclick="app.closeModal()">
-        <i class="fas fa-times"></i>
-      </button>
-      
-      <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
-      <h2 class="modal-title">تم استقبال طلبك بنجاح!</h2>
-      <div class="modal-body">
-        <p>شكرًا لك على طلبك في <strong>مود كيدز</strong>.</p>
-        <p><i class="fas fa-phone"></i> سيتواصل معك فريق المبيعات قريباً لتأكيد الطلب وتفاصيل التوصيل.</p>
-        <div class="order-summary">
-          <h3 class="summary-title">تفاصيل طلبك</h3>
-          <div id="modalOrderSummary">
-            <!-- سيتم ملؤها ديناميكياً -->
-          </div>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="app.closeModal()">موافق</button>
-    </div>
-  </div>
-
-  <!-- تهيئة Firebase -->
   <script>
-    // استبدل هذه القيم ببيانات مشروعك من Firebase Console
+    // ----- CONFIGURATION -----
+    // Remplacez les valeurs ci‑dessous par celles de votre console Firebase.
+    // Les clés côté client sont "publices" ; protégez vos données via les règles de la base.
     const firebaseConfig = {
-      apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
+      apiKey: "AIzaSyAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
       authDomain: "benakrab43.firebaseapp.com",
       databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
       projectId: "benakrab43",
       storageBucket: "benakrab43.appspot.com",
       messagingSenderId: "751387344597",
-      appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
+      appId: "1:123456789000:web:aaaaaaaaaaaaaaaaaaaaaa"
     };
 
-    // تهيئة Firebase
+    // Initialiser Firebase (compat)
     firebase.initializeApp(firebaseConfig);
-  </script>
 
-  <!-- السكريبتات -->
-  <script src="js/data.js"></script>
-  <script src="js/app.js"></script>
+    // ----- SERVICE FIREBASE -----
+    class FirebaseService {
+      constructor() {
+        this.database = firebase.database();
+      }
+
+      async addProduct(product) {
+        try {
+          const newRef = this.database.ref('products').push();
+          await newRef.set({
+            ...product,
+            id: newRef.key,
+            createdAt: firebase.database.ServerValue.TIMESTAMP
+          });
+          return { success: true, id: newRef.key };
+        } catch (err) {
+          console.error('addProduct error', err);
+          return { success: false, error: err.message };
+        }
+      }
+
+      async getProducts() {
+        try {
+          const snap = await this.database.ref('products').once('value');
+          const val = snap.val() || {};
+          return Object.keys(val).map(k => ({ id: k, ...val[k] }));
+        } catch (err) {
+          console.error('getProducts error', err);
+          return [];
+        }
+      }
+
+      async updateProduct(productId, updatedData) {
+        try {
+          await this.database.ref(`products/${productId}`).update(updatedData);
+          return { success: true };
+        } catch (err) {
+          console.error('updateProduct error', err);
+          return { success: false, error: err.message };
+        }
+      }
+
+      async deleteProduct(productId) {
+        try {
+          await this.database.ref(`products/${productId}`).remove();
+          return { success: true };
+        } catch (err) {
+          console.error('deleteProduct error', err);
+          return { success: false, error: err.message };
+        }
+      }
+
+      async getDeliveryOrders() {
+        try {
+          const snap = await this.database.ref('deliveryOrders').once('value');
+          const val = snap.val() || {};
+          return Object.keys(val).map(k => ({ id: k, ...val[k] }));
+        } catch (err) {
+          console.error('getDeliveryOrders error', err);
+          return [];
+        }
+      }
+
+      async updateOrderStatus(orderId, status) {
+        try {
+          await this.database.ref(`deliveryOrders/${orderId}`).update({ status });
+          return { success: true };
+        } catch (err) {
+          console.error('updateOrderStatus error', err);
+          return { success: false, error: err.message };
+        }
+      }
+
+      async deleteOrder(orderId) {
+        try {
+          await this.database.ref(`deliveryOrders/${orderId}`).remove();
+          return { success: true };
+        } catch (err) {
+          console.error('deleteOrder error', err);
+          return { success: false, error: err.message };
+        }
+      }
+    }
+
+    // ----- CODE D'INTERACTION UI -----
+    const firebaseService = new FirebaseService();
+    const ordersListEl = document.getElementById('ordersList');
+
+    // Fonction utilitaire pour échapper du texte afin d'éviter XSS si vous placez dans innerHTML
+    function escapeHtml(str) {
+      if (str == null) return '';
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function renderOrders(orders) {
+      ordersListEl.innerHTML = '';
+      if (!orders.length) {
+        ordersListEl.textContent = 'لا توجد طلبات.';
+        return;
+      }
+
+      orders.forEach(order => {
+        const orderItem = document.createElement('div');
+        orderItem.className = 'order-item';
+
+        // Préparer valeurs avec fallback
+        const customerName = order.customerName || 'غير محدد';
+        const phone = order.phone || 'غير محدد';
+        const address = order.address || 'غير محدد';
+        const products = order.products || 'غير محدد';
+        const status = order.status || 'pending';
+        const dateText = order.createdAt ? new Date(order.createdAt).toLocaleString('ar-EG') : 'غير محدد';
+
+        // Utilisation sûre de innerHTML après échappement pour les champs dynamiques
+        orderItem.innerHTML = `
+          <h3>👤 ${escapeHtml(customerName)}</h3>
+          <p>📞 ${escapeHtml(phone)}</p>
+          <p>📍 ${escapeHtml(address)}</p>
+          <p>📦 ${escapeHtml(products)}</p>
+          <p class="status-${escapeHtml(status)}">🔄 الحالة: ${status === 'pending' ? 'قيد الانتظار' : 'مكتمل'}</p>
+          <p>📅 ${escapeHtml(dateText)}</p>
+          <div class="order-actions"></div>
+        `;
+
+        const actions = orderItem.querySelector('.order-actions');
+
+        if (status === 'pending') {
+          const completeBtn = document.createElement('button');
+          completeBtn.textContent = '✅ تم التوصيل';
+          completeBtn.addEventListener('click', () => updateOrderStatus(order.id, 'completed'));
+          actions.appendChild(completeBtn);
+        } else {
+          const undoBtn = document.createElement('button');
+          undoBtn.textContent = '↩️ إعادة إلى قيد الانتظار';
+          undoBtn.addEventListener('click', () => updateOrderStatus(order.id, 'pending'));
+          actions.appendChild(undoBtn);
+        }
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.textContent = '🗑️ حذف الطلب';
+        deleteBtn.addEventListener('click', () => {
+          if (confirm('هل تريد حقًا حذف هذا الطلب؟')) {
+            firebaseService.deleteOrder(order.id).then(res => {
+              if (res.success) loadDeliveryOrders();
+            });
+          }
+        });
+        actions.appendChild(deleteBtn);
+
+        ordersListEl.appendChild(orderItem);
+      });
+    }
+
+    async function loadDeliveryOrders() {
+      ordersListEl.textContent = 'جاري التحميل...';
+      const orders = await firebaseService.getDeliveryOrders();
+      renderOrders(orders);
+    }
+
+    async function updateOrderStatus(orderId, status) {
+      const res = await firebaseService.updateOrderStatus(orderId, status);
+      if (res.success) {
+        await loadDeliveryOrders();
+      } else {
+        alert('خطأ عند تحديث حالة الطلب: ' + (res.error || 'Unknown'));
+      }
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadDeliveryOrders();
+    });
+  </script>
 </body>
 </html>
