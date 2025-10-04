@@ -11,23 +11,9 @@
     storageBucket: "benakrab43.appspot.com",
     messagingSenderId: "751387344597",
     appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
-  };
 
-  {
-  "orders": {
-    "order1": {
-      "customerName": "محمد أحمد",
-      "address": "سطيف",
-      "phone": "0555 123 456",
-      "status": "قيد المعالجة",
-      "products": [
-        { "name": "حذاء أطفال", "quantity": 2, "price": 2000 },
-        { "name": "فستان أطفال", "quantity": 1, "price": 2500 }
-      ]
-    }
-  }
-}
-
+  
+  
   // Initialize Firebase (compat)
   if (!firebase.apps || !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
