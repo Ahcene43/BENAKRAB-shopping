@@ -11,10 +11,7 @@
     storageBucket: "benakrab43.appspot.com",
     messagingSenderId: "751387344597",
     appId: "1:751387344597:web:0bd5328ef337ee852b2c5c"
-
-  
-  
-  // Initialize Firebase (compat)
+    // Initialize Firebase (compat)
   if (!firebase.apps || !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
   }
