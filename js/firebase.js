@@ -3,15 +3,17 @@
 
 (function () {
   // ضع هنا إعدادات المشروع الحقيقية الخاصة بك
-  const firebaseConfig = {
-    apiKey: "AIzaSyDp474CprMfZ95T_Y0OKsR4k5ca9VJBkZQ",
-    authDomain: "benakrab43.firebaseapp.com",
-    databaseURL: "https://benakrab43-default-rtdb.europe-west1.firebasedatabase.app",
-    projectId: "benakrab43",
-    storageBucket: "benakrab43.appspot.com",
-    messagingSenderId: "751387344597",
-    appId: "1:751387344597:web:0bd5328ef337ee852b2c5c" ;
-  
+  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyD0ft0WLOoSI_gIeRfPcOrk6M5QWDhXDJ4",
+  authDomain: "koka-888c8.firebaseapp.com",
+  databaseURL: "https://koka-888c8-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "koka-888c8",
+  storageBucket: "koka-888c8.firebasestorage.app",
+  messagingSenderId: "625698485689",
+  appId: "1:625698485689:web:1667934b75691ee223b268",
+  measurementId: "G-78SQER5MY6"
+};
     // Initialize Firebase (compat)
   if (!firebase.apps || !firebase.apps.length) {
     firebase.initializeApp(firebaseConfig);
