@@ -128,8 +128,7 @@
           <td>
             ${
               Array.isArray(order.products)
-                ? order.products.map(p => `${p.name} (x${p.qty})`).join("<br>")
-                : ""
+                ? order.products.map(p => `${p.name} (x${p.qty}) - ${p.size} - ${p.age}`).join("<br>")
             }
           </td>
           <td class="status-${order.status}">
