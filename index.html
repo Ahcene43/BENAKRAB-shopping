@@ -1,289 +1,0 @@
-<!DOCTYPE html>
-<html lang="ar" dir="rtl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  
-<title>👕 مود كيدز - أزياء الأطفال الفاخرة</title>
-  <!-- Fonts & Icons -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
-  <!-- CSS -->
-  <link rel="stylesheet" href="css/style.css">
-
-  <!-- Firebase SDK (compat for Realtime DB used here) -->
- 
-  <!-- احذف كل سكريبتات Firebase الموجودة وأستبدلها بهذا: -->
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
-
-<script>
-  // التهيئة - استخدم بياناتك الحقيقية
-  // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyD0ft0WLOoSI_gIeRfPcOrk6M5QWDhXDJ4",
-  authDomain: "koka-888c8.firebaseapp.com",
-  databaseURL: "https://koka-888c8-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "koka-888c8",
-  storageBucket: "koka-888c8.firebasestorage.app",
-  messagingSenderId: "625698485689",
-  appId: "1:625698485689:web:1667934b75691ee223b268",
-  measurementId: "G-78SQER5MY6"
-};
-
-  // Initialize Firebase
-  firebase.initializeApp(firebaseConfig);
-  console.log('✅ Firebase جاهز!');
-</script>
-
-<script src="js/data.js"></script>
-<script src="js/app.js"></script>
-
-
-
-  
-  <!-- Your Firebase config will be initialized in firebase.js (loaded later) -->
-</head>
-<body>
-  <header id="mainHeader">
-    <div class="container">
-      <div class="header-content">
-        <div class="logo-section">
-          <a href="#orderForm" class="logo">
-            
-          </a>
-        </div>
-        <a href="#orderForm" class="cart-summary" id="cartSummary">
-          <div class="cart-icon">
-            <i class="fas fa-shopping-bag"></i>
-            <span class="cart-badge" id="cartBadge">0</span>
-          </div>
-          <span id="cartItemsCount">0 عناصر</span>
-          <span>|</span>
-          <span id="cartTotalPrice">0 دج</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <section class="hero">
-    <div class="hero-content">
-      <h1>أزياء الأطفال التي تستحق الابتسامة</h1>
-      <p>جودة فائقة، تصميمات مبتكرة، وراحة لا مثيل لها لصغيرك. اكتشف تشكيلتنا الحصرية بأسعار تنافسية.</p>
-      <a href="#orderForm" class="cta-button">
-        <i class="fas fa-gift"></i>
-        ابدأ التسوق الآن
-      </a>
-    </div>
-  </section>
-
-  <div class="container">
-    <section class="slider-section">
-      <h2 class="section-title">أحدث تشكيلاتنا للأطفال</h2>
-      <div class="slideshow-container">
-        <button class="slider-arrow prev" id="prevSlide">❮</button>
-        <div class="slides-container" id="slidesContainer"></div>
-        <button class="slider-arrow next" id="nextSlide">❯</button>
-      </div>
-      <div class="slider-nav" id="sliderNav"></div>
-    </section>
-
-    <section class="progress-section">
-      <div class="progress-bar">
-        <div class="progress-step active" data-step="1">
-          <div class="step-icon">1</div>
-          <div class="step-label">اختر المنتجات</div>
-        </div>
-        <div class="progress-step" data-step="2">
-          <div class="step-icon">2</div>
-          <div class="step-label">المعلومات الشخصية</div>
-        </div>
-        <div class="progress-step" data-step="3">
-          <div class="step-icon">3</div>
-          <div class="step-label">تأكيد الطلب</div>
-        </div>
-      </div>
-    </section>
-
-    <form id="orderForm">
-      <!-- STEP 1 -->
-      <section class="form-section" id="step1">
-        <h2 class="form-title"><i class="fas fa-shopping-cart"></i> اختر منتجاتك</h2>
-        <div class="pieces-container" id="piecesContainer"></div>
-
-        <button type="button" id="addPieceBtn" class="btn btn-secondary btn-full">
-          <i class="fas fa-plus"></i> أضف إلى السلة 
-        </button>
-
-        <div class="form-group">
-          <label for="wilaya"><i class="fas fa-map-marker-alt"></i>  اختر الولاية لمعرفة سعر التوصيل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-map-marker-alt"></i></span>
-            <select id="wilaya" name="wilaya" required>
-              <option value="">--   اختر الولاية --</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="deliveryType"><i class="fas fa-truck"></i> نوع التوصيل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-truck"></i></span>
-            <select id="deliveryType" name="deliveryType">
-              <option value="home">التوصيل إلى باب المنزل</option>
-              <option value="desk">التوصيل الى المكتب</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="price-box">
-          <div class="price-header">
-            <i class="fas fa-receipt"></i>
-            <h3 class="price-title">تفاصيل الطلب</h3>
-          </div>
-          <div class="price-item">
-            <span>سعر القطعة:</span>
-            <span id="unitPrice">0 دج</span>
-          </div>
-          <div class="price-item">
-            <span>عدد القطع:</span>
-            <span id="piecesCount">0</span>
-          </div>
-          <div class="price-item">
-            <span>المجموع الجزئي:</span>
-            <span id="subtotal">0 دج</span>
-          </div>
-          <div class="price-item">
-            <span>تكلفة التوصيل:</span>
-            <span id="deliveryCost">0 دج</span>
-          </div>
-          <div class="price-total">
-            <span>المجموع الكلي:</span>
-            <span id="totalPrice">0 دج</span>
-          </div>
-          <div class="price-item" id="discountInfo" style="display: none;">
-            <span>خصم الكمية:</span>
-            <span id="discountAmount">-300 دج</span>
-          </div>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" id="nextToStep2" class="btn btn-primary">
-            التالي <i class="fas fa-arrow-left"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- STEP 2 -->
-      <section class="form-section personal-section" id="step2">
-        <h2 class="form-title"><i class="fas fa-user"></i> معلومات الاتصال</h2>
-
-        <div class="form-group">
-          <label for="name">الاسم الكامل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-user"></i></span>
-            <input type="text" id="name" name="name" required autocomplete="name">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="phone">رقم الهاتف</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-phone"></i></span>
-            <input type="tel" id="phone" name="phone" pattern="^[0-9]{10}$" maxlength="10" required autocomplete="tel" placeholder="أدخل رقم الهاتف">
-          </div>
-          <small style="color: var(--gray); display: block; margin-top: 0.25rem;">يجب أن يتكون من 10 أرقام</small>
-        </div>
-
-        <div class="form-group">
-          <label for="daire">الدائرة</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-map"></i></span>
-            <input type="text" id="daire" name="daire" required autocomplete="address-level3">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="address">العنوان الكامل</label>
-          <div class="input-with-icon">
-            <span class="input-icon"><i class="fas fa-home"></i></span>
-            <textarea id="address" name="address" rows="3" required autocomplete="street-address"></textarea>
-          </div>
-        </div>
-
-        <div class="form-group" style="text-align: center; margin-top: 1rem;">
-          <button type="button" id="clearSavedData" class="clear-data-btn">
-            <i class="fas fa-trash"></i> مسح البيانات المحفوظة
-          </button>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" id="backToStep1" class="btn btn-secondary">
-            <i class="fas fa-arrow-right"></i> الرجوع
-          </button>
-          <button type="button" id="nextToStep3" class="btn btn-primary">
-            التالي <i class="fas fa-arrow-left"></i>
-          </button>
-        </div>
-      </section>
-
-      <!-- STEP 3 -->
-      <section class="form-section personal-section" id="step3">
-        <h2 class="form-title"><i class="fas fa-check-circle"></i> تأكيد الطلب</h2>
-
-        <div class="order-summary">
-          <h3 class="summary-title">ملخص طلبك</h3>
-          <div id="orderSummary"></div>
-        </div>
-
-        <div class="form-group">
-          <label for="notes"><i class="fas fa-sticky-note"></i> ملاحظات إضافية (اختياري)</label>
-          <textarea id="notes" name="notes" rows="3" placeholder="أي ملاحظات إضافية حول الطلب..."></textarea>
-        </div>
-
-        <div class="btn-group">
-          <button type="button" id="backToStep2" class="btn btn-secondary">
-            <i class="fas fa-arrow-right"></i> الرجوع
-          </button>
-          <button type="submit" id="submitOrder" class="btn btn-success">
-            <i class="fas fa-check"></i> تأكيد وإرسال الطلب
-          </button>
-        </div>
-      </section>
-
-      <div class="loading" id="loading">
-        <div class="loading-spinner"></div>
-        <p><i class="fas fa-spinner fa-spin"></i> جاري معالجة طلبك...</p>
-        <p style="color: var(--gray); font-size: 0.9rem; margin-top: 0.5rem;">قد تستغرق العملية بضع ثوانٍ</p>
-      </div>
-    </form>
-  </div>
-
-  <div class="modal" id="successModal">
-    <div class="modal-content">
-      <button class="modal-close" onclick="app.closeModal()">
-        <i class="fas fa-times"></i>
-      </button>
-      <div class="modal-icon"><i class="fas fa-check-circle"></i></div>
-      <h2 class="modal-title">تم استقبال طلبك بنجاح!</h2>
-      <div class="modal-body">
-        <p>شكرًا لك على طلبك في <strong>مود كيدز</strong>.</p>
-        <p><i class="fas fa-phone"></i> سيتواصل معك فريق المبيعات قريباً لتأكيد الطلب وتفاصيل التوصيل.</p>
-        <div class="order-summary">
-          <h3 class="summary-title">تفاصيل طلبك</h3>
-          <div id="modalOrderSummary"></div>
-        </div>
-      </div>
-      <button class="btn btn-primary btn-full" onclick="app.closeModal()">موافق</button>
-    </div>
-  </div>
-
-  <!-- Firebase init + service (firebase.js) must be loaded after SDK -->
-  <script src="js/firebase.js" defer></script>
-  <script src="js/data.js" defer></script>
-  <script src="js/app.js" defer></script>
-</body>
-</html>
