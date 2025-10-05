@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>لوحة الإدارة - BENAKRAB Shopping</title>
+  <link rel="stylesheet" href="style.css"/>
+  <style>
+    body {
+      font-family: "Cairo", sans-serif;
+      background: #f7f9fc;
+      margin: 0;
+      padding: 0;
+      color: #333;
+    }
+    header {
+      background: #4a90e2;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    }
+    h1 { margin: 0; }
+    main { padding: 2rem; }
+
+    .orders-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .orders-table th, .orders-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #eee;
+      text-align: center;
+    }
+    .orders-table thead {
+      background: #f0f4f8;
+    }
+    .orders-table tr:hover {
+      background: #f9fbfd;
+    }
+
+    .status-pending {
+      color: #ff9800;
+      font-weight: bold;
+    }
+    .status-completed {
+      color: #4caf50;
+      font-weight: bold;
+    }
+
+    button {
+      border: none;
+      padding: 6px 12px;
+      margin: 2px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      transition: 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+
+    .btn-deliver { background: #4caf50; color: white; }
+    .btn-pending { background: #ff9800; color: white; }
+    .btn-delete { background: #f44336; color: white; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>📦 لوحة إدارة الطلبيات</h1>
+  </header>
+
+  <main>
+    <section class="orders-section">
+      <h2>قائمة الطلبيات</h2>
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>رقم الطلب</th>
+            <th>اسم الزبون</th>
+            <th>العنوان</th>
+            <th>الهاتف</th>
+            <th>المنتجات</th>
+            <th>الحالة</th>
+            <th>إجراءات</th>
+          </tr>
+        </thead>
+        <tbody id="ordersBody">
+          <tr><td colspan="7">⏳ جاري تحميل الطلبات...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <footer style="text-align:center; padding:1rem; background:#eee; margin-top:2rem;">
+    <p>© 2025 BENAKRAB Shopping - جميع الحقوق محفوظة</p>
+  </footer>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/12.0.0/firebase-database.js"></script>
+  <script src="js/firebase.js"></script>
+
+
+
+
+       
+
+
+
+
+
+  
+  <script>
+    const ordersBody = document.getElementById("ordersBody");
+
+    async function loadOrders() {
+      ordersBody.innerHTML = "<tr><td colspan='7'>⏳ جاري تحميل الطلبات...</td></tr>";
+      const orders = await window.firebaseService.getDeliveryOrders();
+
+      if (!orders.length) {
+        ordersBody.innerHTML = "<tr><td colspan='7'>لا توجد طلبات.</td></tr>";
+        return;
+      }
+
+      ordersBody.innerHTML = "";
+      orders.forEach(order => {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${order.id}</td>
+          <td>${order.customerName || ""}</td>
+          <td>${order.address || ""}</td>
+          <td>${order.phone || ""}</td>
+          <td>
+            ${
+              Array.isArray(order.products)
+                ? order.products.map(p => `${p.name} (x${p.qty})`).join("<br>")
+                : ""
+            }
+          </td>
+          <td class="status-${order.status}">
+            ${order.status === "completed" ? "✅ تم التوصيل" : "⏳ قيد الانتظار"}
+          </td>
+          <td>
+            ${
+              order.status === "pending"
+                ? `<button class="btn-deliver" onclick="markDelivered('${order.id}')">✅ تم التوصيل</button>`
+                : `<button class="btn-pending" onclick="markPending('${order.id}')">↩️ إرجاع للانتظار</button>`
+            }
+            <button class="btn-delete" onclick="deleteOrder('${order.id}')">🗑️ حذف</button>
+          </td>
+        `;
+        ordersBody.appendChild(row);
+      });
+    }
+
+    async function markDelivered(orderId) {
+      const res = await window.firebaseService.updateOrderStatus(orderId, "completed");
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في تحديث الحالة");
+    }
+    async function markPending(orderId) {
+      const res = await window.firebaseService.updateOrderStatus(orderId, "pending");
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في تحديث الحالة");
+    }
+    async function deleteOrder(orderId) {
+      if (!confirm("هل تريد حذف هذا الطلب؟")) return;
+      const res = await window.firebaseService.deleteOrder(orderId);
+      if (res.success) loadOrders();
+      else alert("❌ خطأ في حذف الطلب");
+    }
+
+    document.addEventListener("DOMContentLoaded", loadOrders);
+  </script>
+</body>
+</html>
