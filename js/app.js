@@ -591,26 +591,34 @@ const app = {
   },
 
   collectOrderProducts() {
-    const list = [];
-    for (let i=1; i<=this.pieceCount; i++) {
-      const modalSelect = document.querySelector(`[name="modal${i}"]`);
-      const quantitySelect = document.querySelector(`[name="quantity${i}"]`);
-      const colorInput = document.getElementById(`selectedColor${i}`);
-      const sizeInput = document.getElementById(`selectedSize${i}`);
-      if (modalSelect && modalSelect.value) {
-        const product = this.products.find(p => p.id == modalSelect.value);
-        list.push({
-          id: product.id,
-          name: product.name,
-          qty: quantitySelect ? quantitySelect.value : 1,
-          color: colorInput ? colorInput.value : '',
-          size: sizeInput ? sizeInput.value : '',
-          unitPrice: product.price
-        });
-      }
+  const list = [];
+  for (let i=1; i<=this.pieceCount; i++) {
+    const modalSelect = document.querySelector(`[name="modal${i}"]`);
+    const quantitySelect = document.querySelector(`[name="quantity${i}"]`);
+    const colorInput = document.getElementById(`selectedColor${i}`);
+    const sizeInput = document.getElementById(`selectedSize${i}`);
+    
+    if (modalSelect && modalSelect.value) {
+      const product = this.products.find(p => p.id == modalSelect.value);
+      
+      // البحث عن العمر من الـ sizeChart باستخدام المقاس المختار
+      const selectedSize = sizeInput ? sizeInput.value : '';
+      const sizeInfo = this.sizeChart.find(item => item.size === selectedSize);
+      const age = sizeInfo ? sizeInfo.age : '';
+      
+      list.push({
+        id: product.id,
+        name: product.name,
+        qty: quantitySelect ? quantitySelect.value : 1,
+        color: colorInput ? colorInput.value : '',
+        size: selectedSize,
+        age: age, // إضافة العمر
+        unitPrice: product.price
+      });
     }
-    return list;
-  },
+  }
+  return list;
+},
 
   resetForm() {
     document.getElementById('piecesContainer').innerHTML = '';
